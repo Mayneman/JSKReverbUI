@@ -164,8 +164,8 @@ controls = html.Div(
                         style={"marginBottom": "10px"},
                         n_clicks=0)
         ]),
-        html.Button('Save', id='save_btn', className="btn btn-success", style={"marginRight": "10px"}),
-        html.Button('Reset', id='reset_btn', className="btn btn-warning", style={"marginRight": "10px"}),
+        html.Button('Save', id='save_btn', className="btn btn-success", style={"marginRight": "10px"}, n_clicks=0),
+        html.Button('Reset', id='reset_btn', className="btn btn-warning", style={"marginRight": "10px"}, n_clicks=0),
     ])
 
 sidebar = html.Div(

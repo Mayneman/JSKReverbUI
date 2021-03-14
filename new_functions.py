@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import tkinter as tk
 from tkinter import filedialog
 
 # Local import of measurement and calculation scripts
@@ -64,15 +65,9 @@ def new_save_data(isRaw, rh, room_temperature, pressure, data):
     env_df = buildRH_TempDF(rh, room_temperature, pressure)
     print(env_df)
     # TODO: Make this dynamic through config.
-    import tkinter as tk
-    from tkinter import filedialog
-
     root = tk.Tk()
     root.withdraw()
-
-    file_path = filedialog.askopenfilename()
-
-    save_filename = "D:\\!CANT HUB!"
+    save_filename = filedialog.asksaveasfilename(initialdir=r'D://', title='Save data as', filetypes=(('csv file', '*.csv'),))
     print('Saving data in {} \n'.format(save_filename))
     save_data(data, env_df=env_df, filename=save_filename)
     print(saveRaw)
