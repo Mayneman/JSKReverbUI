@@ -11,6 +11,8 @@ import numpy as np
 # Cleaner function interface
 import new_functions
 
+DATA = None
+
 # Init dash app4
 external_stylesheets = [dbc.themes.BOOTSTRAP, 'main.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
@@ -199,11 +201,12 @@ graphs = html.Div([
 app.layout = html.Div([
     sidebar,
     graphs,
-    html.Div(id='hidden_output')
+    html.Div(id='measure_out'),
+    html.Div(id='save_out'),
 ])
 
 @app.callback(
-    dash.dependencies.Output('hidden_output', 'children'),
+    dash.dependencies.Output('measure_out', 'children'),
     dash.dependencies.Input('start_btn', 'n_clicks'),
     dash.dependencies.State('number_of_runs', 'value'),
     dash.dependencies.State('decay_time', 'value'),
@@ -213,13 +216,30 @@ app.layout = html.Div([
     dash.dependencies.State('room_humidity', 'value'),
     dash.dependencies.State('room_pressure', 'value'),
 )
-
 def trigger_measurements(n_clicks, number_of_runs, decay_time, noise_type, room_volume, room_temp, room_humidity, room_pressure):
+
     if n_clicks > 0:
         print("Submitting Parameters for Measurements")
         print(number_of_runs, decay_time, noise_type, room_volume)
-        new_functions.new_meas1(number_of_runs, decay_time, noise_type, room_volume, room_temp, room_humidity, room_pressure, 100)
+        global DATA
+        DATA = new_functions.new_meas1(number_of_runs, decay_time, noise_type, room_volume, room_temp, room_humidity, room_pressure, 100)
     return ""
+
+@app.callback(
+    dash.dependencies.Output('save_out', 'children'),
+    dash.dependencies.Input('save_btn', 'n_clicks'),
+    dash.dependencies.State('save_data', 'value'),
+    dash.dependencies.State('room_humidity', 'value'),
+    dash.dependencies.State('room_temp', 'value'),
+    dash.dependencies.State('room_pressure', 'value'),
+)
+def save_data(n_clicks, save_data, rh, room_temperature, pressure):
+    if n_clicks > 0:
+        print("Saving CSV File")
+        global DATA
+        new_functions.new_save_data(save_data, rh, room_temperature, pressure, DATA)
+    return ""
+
 
 
 if __name__ == '__main__':

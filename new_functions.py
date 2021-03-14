@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from tkinter import filedialog
 
 # Local import of measurement and calculation scripts
 from runReverberationTimeTests import performMeasurement
@@ -43,9 +44,11 @@ def new_meas1(number_of_runs, decay_time, noise_type, room_volume, room_temp, ro
     print('Number of runs: {} \nDecay time: {} \nNoise color: {} \n'.format(number_of_runs, decay_time, noise_type))
     decay_results = triggerMeasurements(number_of_runs, decay_time, noise_type, room_volume)
     print('Measurement completed - calculating reverb times')
-    self.data1 = triggerRTcalc(decay_results, decay_time, noise_type, volume,
+    data1 = triggerRTcalc(decay_results, decay_time, noise_type, volume,
                                room_temp, room_humidity, room_pressure)
     print('Reverb time calculation completed')
+    return data1
+
 
 # Function to assemble RH. temp, and pressure dataframe for storage
 def buildRH_TempDF(meas1_RH, meas1_T, meas1_P):
@@ -54,44 +57,34 @@ def buildRH_TempDF(meas1_RH, meas1_T, meas1_P):
     return env_df
 
 
-# Function to perform measurement
-def meas1(self, event=''):
-    print("Start measurement button pressed")
-    N = int(self.e1.get())
-    dt = float(self.e2.get())
-    nc = str(self.n_color.get())
-    db_decay = str(self.rt_db.get())
-    volume=float(self.rVol.get())
-    temp=float(self.meas1_temp.get())
-    relativeHumidity=float(self.meas1_rh.get())
-    pressure=float(self.meas1_press.get())
-    source_volume = int(self.vol1_val.get())
-    print('Number of runs: {} \n Decay time: {} \n Noise color: {} \n'.format(N, dt, nc))
-    self.decay_results = triggerMeasurements(n_runs=N, decay_time=dt, noise_color=nc, source_volume=source_volume)
-    print('Measurement completed - calculating reverb times')
-    # self.data1 = triggerRTcalc(decay_results=decay_results, db_decay=db_decay, decay_time=dt)
-    self.data1 = triggerRTcalc(decay_results=self.decay_results, db_decay=db_decay, decay_time=dt, volume=volume, temp=temp, relativeHumidity=relativeHumidity, pressure=pressure)
-    print('Reverb time calculation completed')
-    self.e1stat.set('Data')
+# Save Raw data bool, room humidity, room temp, pressure, data1
+def new_save_data(isRaw, rh, room_temperature, pressure, data):
+    saveRaw = str(isRaw)
+    print("Save data button pressed")
+    env_df = buildRH_TempDF(rh, room_temperature, pressure)
+    print(env_df)
+    # TODO: Make this dynamic through config.
+    import tkinter as tk
+    from tkinter import filedialog
 
-        # Function to build dataframe, prompt for csv location, and save all data
-    def save_data(self, event=''):
-        saveRaw=str(self.sv_raw.get())
-        print("Save data button pressed")
-        env_df = buildRH_TempDF(meas1_RH=self.meas1_rh.get(), meas1_T=self.meas1_temp.get(), meas1_P=self.meas1_press.get())
-        print(env_df)
-        save_filename = filedialog.asksaveasfilename(parent=self.parent, initialdir=r'D://', title='Save data as', filetypes=(('csv file', '*.csv'),))
-        print('Saving data in {} \n'.format(save_filename))
-        save_data(e1_df=self.data1, env_df=env_df, filename=save_filename)
-        print(saveRaw)
-        if saveRaw =='yes':
-            print('Saving raw data')
-            save_raw_data(raw_data=self.decay_results, filename=save_filename)
-        print('Data saved \n')
+    root = tk.Tk()
+    root.withdraw()
 
-    # Function to reset all dataframes to allow measurement to be reset
-    def reset_measurement(self, event=''):
-        self.data1 = []
-        self.e1stat.set('No data')
-        self.decay_results = []
-        print('Measurement Reset')
+    file_path = filedialog.askopenfilename()
+
+    save_filename = "D:\\!CANT HUB!"
+    print('Saving data in {} \n'.format(save_filename))
+    save_data(data, env_df=env_df, filename=save_filename)
+    print(saveRaw)
+    # TODO: enable saving of decay results.
+    # if saveRaw == 'yes':
+    #     print('Saving raw data')
+    #     save_raw_data(raw_data=self.decay_results, filename=save_filename)
+    # print('Data saved \n')
+
+# Function to reset all dataframes to allow measurement to be reset
+def reset_measurement(self, event=''):
+    self.data1 = []
+    self.e1stat.set('No data')
+    self.decay_results = []
+    print('Measurement Reset')
