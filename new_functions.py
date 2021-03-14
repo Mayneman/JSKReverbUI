@@ -64,13 +64,16 @@ def new_save_data(isRaw, rh, room_temperature, pressure, data):
     print("Save data button pressed")
     env_df = buildRH_TempDF(rh, room_temperature, pressure)
     print(env_df)
-    # TODO: Make this dynamic through config.
+    #TODO: Fix bug where double click throws async error, fine for now.
     root = tk.Tk()
     root.withdraw()
     save_filename = filedialog.asksaveasfilename(initialdir=r'D://', title='Save data as', filetypes=(('csv file', '*.csv'),))
-    print('Saving data in {} \n'.format(save_filename))
-    save_data(data, env_df=env_df, filename=save_filename)
-    print(saveRaw)
+    root.destroy()
+    print('root', root)
+    # root = None
+    # print('Saving data in {} \n'.format(save_filename))
+    # save_data(data, env_df=env_df, filename=save_filename)
+    # print(saveRaw)
     # TODO: enable saving of decay results.
     # if saveRaw == 'yes':
     #     print('Saving raw data')
