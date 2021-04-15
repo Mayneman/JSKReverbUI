@@ -70,6 +70,7 @@ def new_save_data(isRaw, rh, room_temperature, pressure, data):
 
     root = tk.Tk()
     root.withdraw()
+    root.wm_attributes('-topmost', 1)
     save_filename = filedialog.asksaveasfilename(initialdir=r'D://', title='Save data as', filetypes=(('csv file', '*.csv'),))
     root.destroy()
     print('root', root)

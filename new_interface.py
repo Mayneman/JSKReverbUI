@@ -14,7 +14,7 @@ import auto_report
 
 DATA = None
 SAVING = False
-CONSOLE = "UI INITIALIZED"
+CONSOLE = "UI Initialized"
 
 # Init dash app4
 external_stylesheets = [dbc.themes.BOOTSTRAP, 'main.css']
@@ -266,25 +266,25 @@ def save_data(n_clicks, save_data, rh, room_temperature, pressure):
         return ""
 
 
-# @app.callback(
-#     dash.dependencies.Output('frequency-table', 'figure'),
-#     dash.dependencies.Input('test_btn', 'n_clicks')
-# )
-# def test_func(n_clicks):
-#     print(n_clicks)
-#     if n_clicks > 0:
-#         table_values = [['<b>RT</b>', '<b>Pass/Fail</b>']]
-#         hz_out = auto_report.full_values()
-#         colour_map = ["white"]
-#         for entry in hz_out:
-#             table_values.append(('{0:.2f}'.format(entry[0]), entry[1]))
-#             if entry[1] == 1:
-#                 colour_map.append(("white", "lightgreen"))
-#             else:
-#                 colour_map.append(("white", "lightred"))
-#         return go.Figure(data=[go.Table(header=dict(values=hz_list), cells=dict(values=table_values, fill_color=colour_map))])
-#     else:
-#         return hz_table
+@app.callback(
+    dash.dependencies.Output('frequency-table', 'figure'),
+    dash.dependencies.Input('test_btn', 'n_clicks')
+)
+def test_func(n_clicks):
+    print(n_clicks)
+    if n_clicks > 0:
+        table_values = [['<b>RT</b>', '<b>Pass/Fail</b>']]
+        hz_out = auto_report.full_values()
+        colour_map = ["white"]
+        for entry in hz_out:
+            table_values.append(('{0:.2f}'.format(entry[0]), entry[1]))
+            if entry[1] == 1:
+                colour_map.append(("white", "lightgreen"))
+            else:
+                colour_map.append(("white", "lightred"))
+        return go.Figure(data=[go.Table(header=dict(values=hz_list), cells=dict(values=table_values, fill_color=colour_map))])
+    else:
+        return hz_table
 
 @app.callback(
     dash.dependencies.Output('console_out_textarea', 'value'),
@@ -293,6 +293,7 @@ def save_data(n_clicks, save_data, rh, room_temperature, pressure):
 def addConsole(n_intervals):
     if n_intervals != 0:
         return CONSOLE
+    return ""
 
 @app.callback(
     dash.dependencies.Output('report_out', 'children'),
@@ -306,6 +307,7 @@ def reportData(n_clicks):
         # Choose Location
         root = tk.Tk()
         root.withdraw()
+        root.wm_attributes('-topmost', 1)
         save_filename = filedialog.asksaveasfilename(initialdir=r'D://', title='Save data as',
                                                      filetypes=(('docx file', '*.docx'),))
         root.destroy()

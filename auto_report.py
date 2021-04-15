@@ -6,6 +6,8 @@ from openpyxl import load_workbook
 import win32com.client as win32
 import os
 import pythoncom
+from docxtpl import DocxTemplate
+import datetime
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # ---EXCEL---
@@ -95,8 +97,7 @@ def report_output(file):
     return hz_table, psac, wsac, snr
 
 # ---WORD---
-from docxtpl import DocxTemplate, InlineImage
-import datetime
+
 
 
 def changeValues(file):
