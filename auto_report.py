@@ -95,10 +95,7 @@ def report_output(file):
     return hz_table, psac, wsac, snr
 
 # ---WORD---
-from docx.shared import Cm
 from docxtpl import DocxTemplate, InlineImage
-from docx.shared import Cm, Inches, Mm, Emu
-import random
 import datetime
 
 
