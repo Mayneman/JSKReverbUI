@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 import tkinter as tk
 from tkinter import filedialog
+import plotly.graph_objects as go
+import dash_core_components as dcc
 
 # Local import of measurement and calculation scripts
 from runReverberationTimeTests import performMeasurement
@@ -65,6 +67,7 @@ def new_save_data(isRaw, rh, room_temperature, pressure, data):
     env_df = buildRH_TempDF(rh, room_temperature, pressure)
     print(env_df)
     #TODO: Fix bug where double click throws async error, fine for now.
+
     root = tk.Tk()
     root.withdraw()
     save_filename = filedialog.asksaveasfilename(initialdir=r'D://', title='Save data as', filetypes=(('csv file', '*.csv'),))
@@ -81,6 +84,7 @@ def new_save_data(isRaw, rh, room_temperature, pressure, data):
     # print('Data saved \n')
 
 # Function to reset all dataframes to allow measurement to be reset
+
 def reset_measurement(self, event=''):
     self.data1 = []
     self.e1stat.set('No data')

@@ -10,8 +10,11 @@ import numpy as np
 
 # Cleaner function interface
 import new_functions
+import auto_report
 
 DATA = None
+SAVING = False
+CONSOLE = "UI INITIALIZED"
 
 # Init dash app4
 external_stylesheets = [dbc.themes.BOOTSTRAP, 'main.css']
@@ -66,8 +69,7 @@ random_y2 = np.random.randn(N) - 5
 
 # Create traces
 hz_list = ['<b>HZ</b>', '100', '125', '160', '200', '250', '315', '400', '500', '630', '800', '1000', '1250', '1600',
-           '2000', '2500',
-           '3150', '4000', '5000']
+           '2000', '2500', '3150', '4000', '5000']
 hz_table = go.Figure(data=[go.Table(header=dict(values=hz_list),
                                     cells=dict(values=[['<b>RT</b>', '<b>Pass/Fail</b>']]))
                            ])
@@ -166,11 +168,23 @@ controls = html.Div(
         ]),
         html.Button('Save', id='save_btn', className="btn btn-success", style={"marginRight": "10px"}, n_clicks=0),
         html.Button('Reset', id='reset_btn', className="btn btn-warning", style={"marginRight": "10px"}, n_clicks=0),
+        html.Button('TEST', id='test_btn', className="btn btn-danger", style={"marginRight": "10px"}, n_clicks=0),
+        html.Button('Report', id='report_btn', className="btn btn-success", style={"marginLeft": "30px"}, n_clicks=0),
+    ])
+
+textarea = html.Div(id='textarea_container',
+     style={
+            'overflow': 'auto',
+            'display': 'flex',
+            'flex-direction': 'column-reverse'},
+    children=[
+            dcc.Textarea(id='console_out_textarea', disabled=True, value=CONSOLE,
+                              style={'width': '100%', 'height': 100}),
     ])
 
 sidebar = html.Div(
     [
-        html.H2("Controls", className="display-4"),
+        html.H3("Controls", className="display-5"),
         html.Hr(),
         html.P("Basic Settings", className="lead"),
         basic_settings,
@@ -180,30 +194,33 @@ sidebar = html.Div(
         html.Hr(),
         html.P("Actions", className="lead"),
         controls,
-        html.Hr()
+        html.Hr(),
+        textarea
     ],
     style=SIDEBAR_STYLE
 )
 
-graphs = html.Div([
-    dcc.Graph(
-        id='example-graph-2',
-        figure=fig
-    ),
-    # Hz Graph for passing room
-    dcc.Graph(
-        id='example-graph-3',
-        figure=hz_table
-    ),
-], style=GRAPH_STYLE
-)
+graphs = html.Div([dcc.Graph(
+                id='example-graph-2',
+                figure=fig),
+            dcc.Graph(
+                id='frequency-table',
+                figure=hz_table
+            )], style=GRAPH_STYLE, id='graphs')
 
 app.layout = html.Div([
     sidebar,
     graphs,
     html.Div(id='measure_out'),
     html.Div(id='save_out'),
+    html.Div(id='report_out'),
+    html.Div(dcc.Interval(
+            id='interval-component',
+            interval=1*1000, # in milliseconds
+            n_intervals=0
+        ))
 ])
+
 
 @app.callback(
     dash.dependencies.Output('measure_out', 'children'),
@@ -216,14 +233,16 @@ app.layout = html.Div([
     dash.dependencies.State('room_humidity', 'value'),
     dash.dependencies.State('room_pressure', 'value'),
 )
-def trigger_measurements(n_clicks, number_of_runs, decay_time, noise_type, room_volume, room_temp, room_humidity, room_pressure):
-
+def trigger_measurements(n_clicks, number_of_runs, decay_time, noise_type, room_volume, room_temp, room_humidity,
+                         room_pressure):
     if n_clicks > 0:
         print("Submitting Parameters for Measurements")
         print(number_of_runs, decay_time, noise_type, room_volume)
         global DATA
-        DATA = new_functions.new_meas1(number_of_runs, decay_time, noise_type, room_volume, room_temp, room_humidity, room_pressure, 100)
+        DATA = new_functions.new_meas1(number_of_runs, decay_time, noise_type, room_volume, room_temp, room_humidity,
+                                       room_pressure, 100)
     return ""
+
 
 @app.callback(
     dash.dependencies.Output('save_out', 'children'),
@@ -234,13 +253,69 @@ def trigger_measurements(n_clicks, number_of_runs, decay_time, noise_type, room_
     dash.dependencies.State('room_pressure', 'value'),
 )
 def save_data(n_clicks, save_data, rh, room_temperature, pressure):
+    global SAVING
+    if SAVING:
+        return ""
+    else:
+        if n_clicks > 0:
+            SAVING = True
+            print("Saving CSV File")
+            global DATA
+            new_functions.new_save_data(save_data, rh, room_temperature, pressure, DATA)
+            SAVING = False
+        return ""
+
+
+# @app.callback(
+#     dash.dependencies.Output('frequency-table', 'figure'),
+#     dash.dependencies.Input('test_btn', 'n_clicks')
+# )
+# def test_func(n_clicks):
+#     print(n_clicks)
+#     if n_clicks > 0:
+#         table_values = [['<b>RT</b>', '<b>Pass/Fail</b>']]
+#         hz_out = auto_report.full_values()
+#         colour_map = ["white"]
+#         for entry in hz_out:
+#             table_values.append(('{0:.2f}'.format(entry[0]), entry[1]))
+#             if entry[1] == 1:
+#                 colour_map.append(("white", "lightgreen"))
+#             else:
+#                 colour_map.append(("white", "lightred"))
+#         return go.Figure(data=[go.Table(header=dict(values=hz_list), cells=dict(values=table_values, fill_color=colour_map))])
+#     else:
+#         return hz_table
+
+@app.callback(
+    dash.dependencies.Output('console_out_textarea', 'value'),
+    dash.dependencies.Input('interval-component', 'n_intervals')
+)
+def addConsole(n_intervals):
+    if n_intervals != 0:
+        return CONSOLE
+
+@app.callback(
+    dash.dependencies.Output('report_out', 'children'),
+    dash.dependencies.Input('report_btn', 'n_clicks')
+)
+def reportData(n_clicks):
     if n_clicks > 0:
-        print("Saving CSV File")
-        global DATA
-        new_functions.new_save_data(save_data, rh, room_temperature, pressure, DATA)
+        global CONSOLE
+        import tkinter as tk
+        from tkinter import filedialog
+        # Choose Location
+        root = tk.Tk()
+        root.withdraw()
+        save_filename = filedialog.asksaveasfilename(initialdir=r'D://', title='Save data as',
+                                                     filetypes=(('docx file', '*.docx'),))
+        root.destroy()
+        # Run Report Process
+        try:
+            auto_report.changeValues(save_filename)
+            CONSOLE += "\nReport Created"
+        except:
+            CONSOLE += "\nError in Reporting Process"
     return ""
-
-
 
 if __name__ == '__main__':
     app.run_server(debug=True)
