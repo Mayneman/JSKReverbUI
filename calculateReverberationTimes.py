@@ -21,9 +21,7 @@ import iso354
 def performRTcalculation(data, volume, temp, relativeHumidity, pressure, db_decay='t20', decay_time=5):
     print("Shape of data into RT calc: {}".format(np.shape(data)))
     # Load configuration file - path needs to be absolute for executable to find it
-    config_data = helpers.parseConfigFile(path=r'C:\Users\Nick\Documents\Python Scripts\reverb-tkinter-interface\config.cfg') # Nick PC
-    # config_data = helpers.parseConfigFile(path=r'D:\Scripts\reverb-tkinter-interface\config.cfg') # Scrum PC
-    # config_data = helpers.parseConfigFile(path=r'D:\ReverberationRoom\tkinter-interface\config.cfg') # Rob PC
+    config_data = helpers.parseConfigFile(path=r'config.cfg')
     
     # Read all configuration data
     print('Reading config data from .config file')

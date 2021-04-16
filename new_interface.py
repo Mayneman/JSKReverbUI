@@ -14,6 +14,7 @@ import auto_report
 
 DATA = None
 SAVING = False
+SAVE_LOCATION = "ReportFiles/run.csv"
 CONSOLE = "UI Initialized"
 
 # Init dash app4
@@ -168,8 +169,8 @@ controls = html.Div(
         ]),
         html.Button('Save', id='save_btn', className="btn btn-success", style={"marginRight": "10px"}, n_clicks=0),
         html.Button('Reset', id='reset_btn', className="btn btn-warning", style={"marginRight": "10px"}, n_clicks=0),
-        html.Button('TEST', id='test_btn', className="btn btn-danger", style={"marginRight": "10px"}, n_clicks=0),
-        html.Button('Report', id='report_btn', className="btn btn-success", style={"marginLeft": "30px"}, n_clicks=0),
+        html.Button('CSV Check', id='test_btn', className="btn btn-danger", style={"marginRight": "10px"}, n_clicks=0),
+        html.Button('Report', id='report_btn', className="btn btn-success", style={"marginRight": "10px"}, n_clicks=0),
     ])
 
 textarea = html.Div(id='textarea_container',
@@ -261,8 +262,11 @@ def save_data(n_clicks, save_data, rh, room_temperature, pressure):
             SAVING = True
             print("Saving CSV File")
             global DATA
-            new_functions.new_save_data(save_data, rh, room_temperature, pressure, DATA)
+            global SAVE_LOCATION
+            save_file_name = new_functions.new_save_data(save_data, rh, room_temperature, pressure, DATA)
             SAVING = False
+            SAVE_LOCATION = save_file_name
+            print("Save location changed to " + save_file_name)
         return ""
 
 
@@ -274,7 +278,7 @@ def test_func(n_clicks):
     print(n_clicks)
     if n_clicks > 0:
         table_values = [['<b>RT</b>', '<b>Pass/Fail</b>']]
-        hz_out = auto_report.full_values()
+        hz_out = auto_report.full_values(SAVE_LOCATION)
         colour_map = ["white"]
         for entry in hz_out:
             table_values.append(('{0:.2f}'.format(entry[0]), entry[1]))

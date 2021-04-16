@@ -6,8 +6,9 @@ from openpyxl import load_workbook
 import win32com.client as win32
 import os
 import pythoncom
-from docxtpl import DocxTemplate
+from docxtpl import DocxTemplate, InlineImage
 import datetime
+from docx.shared import Mm
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # ---EXCEL---
@@ -28,6 +29,10 @@ def update_excel(file):
     pythoncom.CoInitialize()
     excel = win32.Dispatch('Excel.Application')
     workbook = excel.Workbooks.Open(ROOT_DIR + '/' + file)
+    # Get Chart
+    sheet = workbook.Sheets('Output for Report')
+    for chartObject in sheet.ChartObjects():
+        chartObject.Chart.Export(ROOT_DIR + "/ReportFiles/chartImage.png")
     workbook.Save()
     workbook.Close()
     excel.Quit()
@@ -68,8 +73,8 @@ def get_excel(file):
     return result_list
 
 
-def full_values():
-    csv = "ReportFiles/run.csv"
+# Complete entire csv data transaction.
+def full_values(csv):
     file = "ReportFiles/rt_calc.xlsm"
     data = get_raw_values(csv)
     to_excel(file, data)
@@ -98,12 +103,9 @@ def report_output(file):
 
 # ---WORD---
 
-
-
 def changeValues(file):
     # Import Template
     template = DocxTemplate('ReportFiles/WordTemplate.docx')
-
     # Date
     x = datetime.datetime.now()
     hz_table, psac, wsac, snr = report_output("ReportFiles/rt_calc.xlsm")
@@ -118,9 +120,13 @@ def changeValues(file):
         'hz': hz_table,
         'psac': psac,
         'wsac': wsac,
-        'snr': snr
+        'snr': snr,
+        'chart': InlineImage(template, 'ReportFiles/chartImage.png', width=Mm(105))
     }
     # Apply Values
     template.render(context)
     # Save Template
     template.save(file + '.docx')
+
+get_excel("ReportFiles/rt_calc.xlsm")
+changeValues('ReportFiles/Generated')
