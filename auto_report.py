@@ -12,7 +12,6 @@ from docx.shared import Mm
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # ---EXCEL---
-
 def get_raw_values(filename):
     df = pd.read_csv(filename)[1:41:2]
     data_dict = {}
@@ -101,8 +100,8 @@ def report_output(file):
 
     return hz_table, psac, wsac, snr
 
-# ---WORD---
 
+# ---WORD---
 def changeValues(file):
     # Import Template
     template = DocxTemplate('ReportFiles/WordTemplate.docx')
@@ -128,5 +127,6 @@ def changeValues(file):
     # Save Template
     template.save(file + '.docx')
 
-get_excel("ReportFiles/rt_calc.xlsm")
+
+get_excel('ReportFiles/rt_calc.xlsm')
 changeValues('ReportFiles/Generated')
