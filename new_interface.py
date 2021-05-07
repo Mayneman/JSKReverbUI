@@ -11,10 +11,12 @@ import numpy as np
 # Cleaner function interface
 import new_functions
 import auto_report
+import logger
 
 DATA = None
 SAVING = False
 SAVE_LOCATION = "ReportFiles/run.csv"
+FOLDER_LOCATION = None
 CONSOLE = "UI Initialized"
 
 # Init dash app4
@@ -39,7 +41,7 @@ GRAPH_STYLE = {
     "bottom": 0,
     "width": "80%"
 }
-
+    
 
 # Sample Graph
 def make_sample_data():
@@ -78,12 +80,12 @@ hz_table = go.Figure(data=[go.Table(header=dict(values=hz_list),
 basic_settings = html.Div([
     html.Div([
         html.Label("No. of Runs", style={"width": "130px"}),
-        dcc.Input(id="number_of_runs", type="number", placeholder="No. of Runs", value=9,
+        dcc.Input(id="number_of_runs", type="number", placeholder="No. of Runs", value=2,
                   style={"width": "30%", "marginRight": "20%"})
     ]),
     html.Div([
         html.Label("Decay Time (sec)", style={"width": "130px"}),
-        dcc.Input(id="decay_time", type="number", placeholder="No. of Runs", value=8,
+        dcc.Input(id="decay_time", type="number", placeholder="No. of Runs", value=4,
                   style={"width": "30%", "marginRight": "20%"}),
     ]),
     html.Div([
@@ -107,13 +109,13 @@ basic_settings = html.Div([
     html.Div([
         html.Label("T Value", style={"width": "130px"}),
         dcc.Dropdown(
-            id='t_type',
+            id='db_decay',
             options=[
-                {'label': 'T20', 'value': 'T20'},
-                {'label': 'T30', 'value': 'T30'},
-                {'label': 'MAX', 'value': 'MAX'}
+                {'label': 'T20', 'value': 't20'},
+                {'label': 'T30', 'value': 't30'},
+                {'label': 'MAX', 'value': 'all'}
             ],
-            value='T30',
+            value='t30',
             clearable=False,
             style={"width": "110px"}
         ),
@@ -164,10 +166,11 @@ controls = html.Div(
     [
         html.Div([
             html.Button('Start Measurement', id='start_btn', className="btn btn-primary",
-                        style={"marginBottom": "10px"},
-                        n_clicks=0)
+                        style={"marginBottom": "10px", "marginRight": "10px"},
+                        n_clicks=0),
+            html.Button('Save As', id='save_btn', className="btn btn-success", style={"marginBottom": "10px"}, n_clicks=0),
         ]),
-        html.Button('Save', id='save_btn', className="btn btn-success", style={"marginRight": "10px"}, n_clicks=0),
+
         html.Button('Reset', id='reset_btn', className="btn btn-warning", style={"marginRight": "10px"}, n_clicks=0),
         html.Button('CSV Check', id='test_btn', className="btn btn-danger", style={"marginRight": "10px"}, n_clicks=0),
         html.Button('Report', id='report_btn', className="btn btn-success", style={"marginRight": "10px"}, n_clicks=0),
@@ -229,19 +232,22 @@ app.layout = html.Div([
     dash.dependencies.State('number_of_runs', 'value'),
     dash.dependencies.State('decay_time', 'value'),
     dash.dependencies.State('noise_type', 'value'),
+    dash.dependencies.State('db_decay', 'value'),
     dash.dependencies.State('room_volume', 'value'),
     dash.dependencies.State('room_temp', 'value'),
     dash.dependencies.State('room_humidity', 'value'),
     dash.dependencies.State('room_pressure', 'value'),
 )
-def trigger_measurements(n_clicks, number_of_runs, decay_time, noise_type, room_volume, room_temp, room_humidity,
-                         room_pressure):
+def trigger_measurements(n_clicks, number_of_runs, decay_time, noise_type, db_decay, room_volume, room_temp,
+                         room_humidity, room_pressure):
     if n_clicks > 0:
         print("Submitting Parameters for Measurements")
         print(number_of_runs, decay_time, noise_type, room_volume)
         global DATA
-        DATA = new_functions.new_meas1(number_of_runs, decay_time, noise_type, room_volume, room_temp, room_humidity,
+        global SAVE_LOCATION
+        DATA = new_functions.new_meas1(number_of_runs, decay_time, noise_type, db_decay, room_temp, room_humidity,
                                        room_pressure, 100)
+        new_functions.save_csv(SAVE_LOCATION, room_humidity, room_temp, room_pressure, DATA)
     return ""
 
 
@@ -260,13 +266,14 @@ def save_data(n_clicks, save_data, rh, room_temperature, pressure):
     else:
         if n_clicks > 0:
             SAVING = True
-            print("Saving CSV File")
+            print("Choosing Save Location")
             global DATA
             global SAVE_LOCATION
             save_file_name = new_functions.new_save_data(save_data, rh, room_temperature, pressure, DATA)
             SAVING = False
             SAVE_LOCATION = save_file_name
             print("Save location changed to " + save_file_name)
+            logger.add_text("Save location changed to " + save_file_name)
         return ""
 
 
@@ -296,7 +303,7 @@ def test_func(n_clicks):
 )
 def addConsole(n_intervals):
     if n_intervals != 0:
-        return CONSOLE
+        return logger.get_text()
     return ""
 
 @app.callback(
@@ -310,14 +317,12 @@ def reportData(n_clicks):
         from tkinter import filedialog
         # Choose Location
         root = tk.Tk()
-        root.withdraw()
+        root.withdraw()#####
         root.wm_attributes('-topmost', 1)
-        save_filename = filedialog.asksaveasfilename(initialdir=r'D://', title='Save data as',
-                                                     filetypes=(('docx file', '*.docx'),))
-        root.destroy()
+        # TODO: Save to folder
         # Run Report Process
         try:
-            auto_report.changeValues(save_filename)
+            # auto_report.changeValues(save_filename)
             CONSOLE += "\nReport Created"
         except:
             CONSOLE += "\nError in Reporting Process"

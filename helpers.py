@@ -84,13 +84,11 @@ def usePreExcitation(rise_time, excitation_time, decay_time, fs, noise_color="pi
     N = int(t_in*fs)
     if noise_color == "pink":
         # Import pink noise and clip to length
-        # raw_data = np.load(r'D:\Scripts\reverb-tkinter-interface\pinkNoise{}.npy'.format(signal_num)) # Scrum PC
-        raw_data = np.load(r'C:\Users\Nick\Documents\Python Scripts\reverb-tkinter-interface\pinkNoise{}.npy'.format(signal_num)) # Nick PC
+        raw_data = np.load(r'NoiseFiles\pinkNoise{}.npy'.format(signal_num)) # Nick PC
         initial_array = raw_data[:N]
     elif noise_color == "white":
         # Import white noise and clip to length
-        # raw_data = np.load(r'D:\Scripts\reverb-tkinter-interface\whiteNoise{}.npy'.format(signal_num)) # Scrum PC
-        raw_data = np.load(r'C:\Users\Nick\Documents\Python Scripts\reverb-tkinter-interface\whiteNoise{}.npy'.format(signal_num)) # Nick PC
+        raw_data = np.load(r'NoiseFiles\whiteNoise{}.npy'.format(signal_num)) # Nick PC
         initial_array = raw_data[:N]
     ramped_excitation = applyRamp(x=initial_array, t_rise=rise_time, fs=fs)
     decay_excitation = applyDecay(x=ramped_excitation, t_decay=decay_time, fs=fs)

@@ -10,12 +10,11 @@ import configparser
 from time import sleep
 
 import helpers
+import logger
 
 def performMeasurement(n_runs, decay_time, noise_color, source_volume):
     # Load configuration file - this needs to be absolute path for exe file
-    config_data = helpers.parseConfigFile(path=r'C:\Users\Nick\Documents\Python Scripts\reverb-tkinter-interface\config.cfg') # Nick PC
-    # config_data = helpers.parseConfigFile(path=r'D:\Scripts\reverb-tkinter-interface\config.cfg') # Scrum PC
-    # config_data = helpers.parseConfigFile(path=r'E:\ReverberationRoom\reverb-tkinter-interface\config.cfg') # Rob PC
+    config_data = helpers.parseConfigFile(path=r'config.cfg') # Nick PC
 
     ## The system names for the NI devices can be found using the NI-MAX package which is installed as part of the DAQ-mx installation
     ## These names can be changed in NI-MAX, but need to be updated in the software configuration file
@@ -85,6 +84,7 @@ def performMeasurement(n_runs, decay_time, noise_color, source_volume):
         print("Starting measurements")
         for nxd in range(n_runs):
             print("Run: {}".format(nxd))
+            logger.add_text("Run: {}/{}".format(nxd + 1, n_runs))
             # Start output signal and measurement
             ao_task.start()
             ai_task.start()

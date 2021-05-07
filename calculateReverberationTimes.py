@@ -4,10 +4,7 @@ from numpy.fft import irfft
 import csv
 import pandas as pd
 import sys
-# sys.path.insert(1, r"C:\Users\Nick\Documents\Python Scripts\standards\standards") # Nick PC
-# sys.path.insert(1, r"D:\Scripts\standards\standards") # Scrum PC
-# sys.path.insert(1, r"E:\ReverberationRoom\standards\standards") # Rob PC
-sys.path.insert(1, r"C:\JSK Acoustics\standards") # Lewis PC
+
 import filterAndBands
 import helpers
 import iso354
@@ -22,6 +19,7 @@ def performRTcalculation(data, volume, temp, relativeHumidity, pressure, db_deca
     print("Shape of data into RT calc: {}".format(np.shape(data)))
     # Load configuration file - path needs to be absolute for executable to find it
     config_data = helpers.parseConfigFile(path=r'config.cfg')
+    print(config_data)
     
     # Read all configuration data
     print('Reading config data from .config file')

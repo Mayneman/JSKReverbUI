@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 import dash_core_components as dcc
 
 # Local import of measurement and calculation scripts
+import logger
 from runReverberationTimeTests import performMeasurement
 from calculateReverberationTimes import performRTcalculation
 
@@ -17,9 +18,11 @@ def triggerMeasurements(n_runs, decay_time, noise_color, source_volume):
     print('Noise color: {}'.format(noise_color))
     return decay_results
 
+
 # Take results from measurements and perform RT calculations according to ISO 354 methodology
-def triggerRTcalc(decay_results, db_decay, decay_time, volume, temp, relativeHumidity, pressure):
-    reverberationTimes = performRTcalculation(data=decay_results, volume=volume, temp=temp, relativeHumidity=relativeHumidity, pressure=pressure, db_decay=db_decay, decay_time=decay_time)
+def triggerRTcalc(decay_results, decay_time, db_decay, volume, temp, relativeHumidity, pressure):
+
+    reverberationTimes = performRTcalculation(data=decay_results, volume=volume, temp=temp, relativeHumidity=relativeHumidity, pressure=pressure, db_decay=db_decay, decay_time=float(decay_time))
     print("Reverb time calculated")
     print(reverberationTimes)
     return reverberationTimes
@@ -43,11 +46,13 @@ def save_raw_data(raw_data, filename):
     print('Stored raw data')
     return 1
 
-def new_meas1(number_of_runs, decay_time, noise_type, room_volume, room_temp, room_humidity, room_pressure, volume):
+
+def new_meas1(number_of_runs, decay_time, noise_type, db_decay, room_temp, room_humidity, room_pressure, volume):
     print('Number of runs: {} \nDecay time: {} \nNoise color: {} \n'.format(number_of_runs, decay_time, noise_type))
-    decay_results = triggerMeasurements(number_of_runs, decay_time, noise_type, room_volume)
+    decay_results = triggerMeasurements(number_of_runs, decay_time, noise_type, volume)
     print('Measurement completed - calculating reverb times')
-    data1 = triggerRTcalc(decay_results, decay_time, noise_type, volume,
+    # decay_results, db_decay, decay_time, volume, temp, relativeHumidity, pressure
+    data1 = triggerRTcalc(decay_results, decay_time, db_decay, volume,
                                room_temp, room_humidity, room_pressure)
     print('Reverb time calculation completed')
     return data1
@@ -60,23 +65,30 @@ def buildRH_TempDF(meas1_RH, meas1_T, meas1_P):
     return env_df
 
 
+def save_csv(save_filename, rh, room_temperature, pressure, data):
+    env_df = buildRH_TempDF(rh, room_temperature, pressure)
+    save_data(data, env_df=env_df, filename=save_filename + '/NO_SAMPLE.csv')
+    logger.add_text('NO_SAMPLE.CSV saved in ' + save_filename + '/NO_SAMPLE.csv')
+    print('NO_SAMPLE.CSV saved in ' + save_filename + '/NO_SAMPLE.csv')
+    return
+
+
 # Save Raw data bool, room humidity, room temp, pressure, data1
 def new_save_data(isRaw, rh, room_temperature, pressure, data):
-    saveRaw = str(isRaw)
     print("Save data button pressed")
     env_df = buildRH_TempDF(rh, room_temperature, pressure)
     print(env_df)
-    #TODO: Fix bug where double click throws async error, fin e for now.
-
+    #TODO: Fix bug where double click throws async error, fine for now.
     root = tk.Tk()
     root.withdraw()
     root.wm_attributes('-topmost', 1)
-    save_filename = filedialog.asksaveasfilename(initialdir=r'D://', title='Save data as', filetypes=(('csv file', '*.csv'),))
+    save_filename = filedialog.askdirectory()
     root.destroy()
     print('root', root)
     root = None
     print('Saving data in {} \n'.format(save_filename))
-    save_data(data, env_df=env_df, filename=save_filename)
+    # TODO: Save Data .csv change to new function after run.
+    # save_data(data, env_df=env_df, filename=save_filename)
     # TODO: enable saving of decay results.
     # if saveRaw == 'yes':
     #     print('Saving raw data')
@@ -91,3 +103,9 @@ def reset_measurement(self, event=''):
     self.e1stat.set('No data')
     self.decay_results = []
     print('Measurement Reset')
+
+
+def log_text(console, message):
+    new_value = console + '\n' + message
+    return new_value
+
