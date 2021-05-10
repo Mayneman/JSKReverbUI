@@ -34,41 +34,14 @@ SIDEBAR_STYLE = {
     "backgroundColor": "#f8f9fa",
 }
 
-GRAPH_STYLE = {
+MAIN_STYLE = {
     "position": "fixed",
     "top": 0,
     "left": "20%",
     "bottom": 0,
-    "width": "80%"
+    "width": "80%",
+    "padding": "2rem 1rem",
 }
-    
-
-# Sample Graph
-def make_sample_data():
-    x = []
-    y = []
-    for i in range(1, 100):
-        x.append(1 / i)
-        y.append(i)
-    return {'x': x, 'y': y}
-
-
-np.random.seed(1)
-
-df = pd.DataFrame(data=make_sample_data())
-
-fig = go.Figure()
-
-fig.add_trace(go.Scatter(x=df.x, y=df.y, mode='lines+markers', name='lines'))
-fig.update_layout(title='Graph of 1/Time',
-                  xaxis_title='1/Time',
-                  yaxis_title='Time')
-
-N = 100
-random_x = np.linspace(0, 1, N)
-random_y0 = np.random.randn(N) + 5
-random_y1 = np.random.randn(N)
-random_y2 = np.random.randn(N) - 5
 
 # Create traces
 hz_list = ['<b>HZ</b>', '100', '125', '160', '200', '250', '315', '400', '500', '630', '800', '1000', '1250', '1600',
@@ -76,6 +49,8 @@ hz_list = ['<b>HZ</b>', '100', '125', '160', '200', '250', '315', '400', '500', 
 hz_table = go.Figure(data=[go.Table(header=dict(values=hz_list),
                                     cells=dict(values=[['<b>RT</b>', '<b>Pass/Fail</b>']]))
                            ])
+# Resize Table Plot
+hz_table.update_layout(height=120, margin=dict(r=50, l=50, t=10, b=5))
 
 basic_settings = html.Div([
     html.Div([
@@ -204,17 +179,66 @@ sidebar = html.Div(
     style=SIDEBAR_STYLE
 )
 
-graphs = html.Div([dcc.Graph(
-                id='example-graph-2',
-                figure=fig),
-            dcc.Graph(
-                id='frequency-table',
-                figure=hz_table
-            )], style=GRAPH_STYLE, id='graphs')
+graphs = html.Div([
+        html.Div([
+            html.H3("Reverb Frequency Times", className="display-5")
+        ], style={"marginLeft": "5%"}),
+        dcc.Graph(
+            id='frequency-table',
+            figure=hz_table
+        )], id='graphs')
+
+unique_variables = html.Div([
+    html.Div([
+        html.H3("Unique Variables", className="display-5")
+    ], style={"marginBottom":"30px"}),
+    html.Div([
+        html.Label("Job Number: ", style={"width": "180px"}),
+        dcc.Input(id="job_no", type="number", placeholder="Job No.",
+                  style={"width": "10%", "marginRight": "5%"})
+    ]),
+    html.Div([
+        html.Label("Client Name: ", style={"width": "180px"}),
+        dcc.Input(id="client", type="text", placeholder="Client",
+                  style={"width": "10%", "marginRight": "5%"})
+    ], style={"marginBottom":"30px"}),
+    html.Div([
+        html.Label("Name of Specimen: ", style={"width": "180px"}),
+        dcc.Input(id="specimen_name", type="text", placeholder="Name",
+                  style={"width": "10%", "marginRight": "5%"})
+    ]),
+    html.Div([
+        html.Label("Description of Specimen: ", style={"width": "180px"}),
+        dcc.Input(id="specimen_desc", type="text", placeholder="Description",
+                  style={"width": "10%", "marginRight": "5%"})
+    ]),
+    html.Div([
+        html.Label("Size of Specimen: ", style={"width": "180px"}),
+        dcc.Input(id="specimen_size", type="text", placeholder="Size",
+                  style={"width": "10%", "marginRight": "5%"})
+    ]),
+    html.Div([
+        html.Label("Mass of Specimen: ", style={"width": "180px"}),
+        dcc.Input(id="specimen_mass", type="text", placeholder="Mass",
+                  style={"width": "10%", "marginRight": "5%"})
+    ]),
+    html.Div([
+        html.Label("Area of Specimen: ", style={"width": "180px"}),
+        dcc.Input(id="specimen_area", type="text", placeholder="Area",
+                  style={"width": "10%", "marginRight": "5%"})
+    ]),
+
+], style={"marginLeft": "5%", "marginTop": "5%", "marginBottom": "5%"})
+
+main_component = html.Div([
+    unique_variables,
+    html.Hr(),
+    graphs
+], style=MAIN_STYLE)
 
 app.layout = html.Div([
     sidebar,
-    graphs,
+    main_component,
     html.Div(id='measure_out'),
     html.Div(id='save_out'),
     html.Div(id='report_out'),
