@@ -102,20 +102,26 @@ def report_output(file):
 
 
 # ---WORD---
-def changeValues(file):
+def changeValues(save_location, bracket_type, values):
     # Import Template
-    template = DocxTemplate('ReportFiles/WordTemplate.docx')
+    template = DocxTemplate('ReportFiles/' + bracket_type + '.docx')
     # Date
     x = datetime.datetime.now()
     hz_table, psac, wsac, snr = report_output("ReportFiles/rt_calc.xlsm")
     # TODO: Gather actual values.
     context = {
-        'report_number': 'X',
+        'report_number': values[0],
         'issue_date': str(x.day) + '/' + str(x.month) + '/' + str(x.year),
         'test_date': str(x.day) + '/' + str(x.month) + '/' + str(x.year),
-        'temperature': '25',
-        'humidity': '50',
-        'pressure': '1000',
+        'client': values[1],
+        'specimen_name': values[2],
+        'specimen_desc': values[3],
+        'specimen_size': values[4],
+        'specimen_mass': values[5],
+        'specimen_area': values[6],
+        'temperature': values[7],
+        'humidity': values[8],
+        'pressure': values[9],
         'hz': hz_table,
         'psac': psac,
         'wsac': wsac,
@@ -125,8 +131,4 @@ def changeValues(file):
     # Apply Values
     template.render(context)
     # Save Template
-    template.save(file + '.docx')
-
-
-get_excel('ReportFiles/rt_calc.xlsm')
-changeValues('ReportFiles/Generated')
+    template.save(save_location + '/Report.docx')

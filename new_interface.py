@@ -54,6 +54,14 @@ hz_table.update_layout(height=120, margin=dict(r=50, l=50, t=10, b=5))
 
 basic_settings = html.Div([
     html.Div([
+        html.Label("Sample Present", style={"width": "130px"}),
+        daq.ToggleSwitch(
+            id='sample_bool',
+            value=False,
+            color='#309143'
+        ),
+    ], style={"marginTop": "10px", "display": "flex", "alignItems": "left", "justifyContent": "left"}),
+    html.Div([
         html.Label("No. of Runs", style={"width": "130px"}),
         dcc.Input(id="number_of_runs", type="number", placeholder="No. of Runs", value=2,
                   style={"width": "30%", "marginRight": "20%"})
@@ -100,20 +108,22 @@ basic_settings = html.Div([
         dcc.Dropdown(
             id='bracket_type',
             options=[
-                {'label': 'A-Mounting', 'value': 'A'},
-                {'label': 'E-Mounting', 'value': 'E'},
-                {'label': 'Other', 'value': 'Other'}
+                {'label': 'A Mounting', 'value': 'A'},
+                {'label': 'A Mounting (Cavity)', 'value': 'A_Cavity'},
+                {'label': 'E200 Mounting', 'value': 'E200'},
+                {'label': 'E400 Mounting', 'value': 'E400'},
+                {'label': 'G Mounting', 'value': 'G'}
             ],
             value='A',
             clearable=False,
-            style={"width": "130px"}
+            style={"width": "200px"}
         ),
     ], style={"marginTop": "10px", "display": "flex", "alignItems": "left", "justifyContent": "left"}),
     html.Div([
         html.Label("Save Raw Data", style={"width": "130px"}),
         daq.ToggleSwitch(
             id='save_data',
-            value=True,
+            value=False,
             color='#309143'
         ),
     ], style={"marginTop": "10px", "display": "flex", "alignItems": "left", "justifyContent": "left"}),
@@ -140,15 +150,11 @@ environment = html.Div([
 controls = html.Div(
     [
         html.Div([
-            html.Button('Start Measurement', id='start_btn', className="btn btn-primary",
+            html.Button('Start Measurement', id='start_btn', className="btn btn-primary", disabled=True,
                         style={"marginBottom": "10px", "marginRight": "10px"},
                         n_clicks=0),
             html.Button('Save As', id='save_btn', className="btn btn-success", style={"marginBottom": "10px"}, n_clicks=0),
         ]),
-
-        html.Button('Reset', id='reset_btn', className="btn btn-warning", style={"marginRight": "10px"}, n_clicks=0),
-        html.Button('CSV Check', id='test_btn', className="btn btn-danger", style={"marginRight": "10px"}, n_clicks=0),
-        html.Button('Report', id='report_btn', className="btn btn-success", style={"marginRight": "10px"}, n_clicks=0),
     ])
 
 textarea = html.Div(id='textarea_container',
@@ -171,7 +177,6 @@ sidebar = html.Div(
         html.P("Environment", className="lead"),
         environment,
         html.Hr(),
-        html.P("Actions", className="lead"),
         controls,
         html.Hr(),
         textarea
@@ -190,7 +195,7 @@ graphs = html.Div([
 
 unique_variables = html.Div([
     html.Div([
-        html.H3("Unique Variables", className="display-5")
+        html.H3("Job Info", className="display-5")
     ], style={"marginBottom":"30px"}),
     html.Div([
         html.Label("Job Number: ", style={"width": "180px"}),
@@ -250,9 +255,11 @@ app.layout = html.Div([
 ])
 
 
+# Main Function, measure and report/display RT
 @app.callback(
-    dash.dependencies.Output('measure_out', 'children'),
+    dash.dependencies.Output('frequency-table', 'figure'),
     dash.dependencies.Input('start_btn', 'n_clicks'),
+    dash.dependencies.State('sample_bool', 'value'),
     dash.dependencies.State('number_of_runs', 'value'),
     dash.dependencies.State('decay_time', 'value'),
     dash.dependencies.State('noise_type', 'value'),
@@ -261,22 +268,58 @@ app.layout = html.Div([
     dash.dependencies.State('room_temp', 'value'),
     dash.dependencies.State('room_humidity', 'value'),
     dash.dependencies.State('room_pressure', 'value'),
+    dash.dependencies.State('bracket_type', 'value'),
+    dash.dependencies.State('job_no', 'value'),
+    dash.dependencies.State('client', 'value'),
+    dash.dependencies.State('specimen_name', 'value'),
+    dash.dependencies.State('specimen_desc', 'value'),
+    dash.dependencies.State('specimen_size', 'value'),
+    dash.dependencies.State('specimen_mass', 'value'),
+    dash.dependencies.State('specimen_area', 'value'),
 )
-def trigger_measurements(n_clicks, number_of_runs, decay_time, noise_type, db_decay, room_volume, room_temp,
-                         room_humidity, room_pressure):
+def trigger_measurements(n_clicks, number_of_runs, sample_bool, decay_time, noise_type, db_decay, room_volume, room_temp,
+                         room_humidity, room_pressure, bracket_type, job_no, client, specimen_name, specimen_desc,
+                         specimen_size, specimen_mass, specimen_area):
     if n_clicks > 0:
         print("Submitting Parameters for Measurements")
         print(number_of_runs, decay_time, noise_type, room_volume)
         global DATA
         global SAVE_LOCATION
+        # Run Measurements
         DATA = new_functions.new_meas1(number_of_runs, decay_time, noise_type, db_decay, room_temp, room_humidity,
                                        room_pressure, 100)
-        new_functions.save_csv(SAVE_LOCATION, room_humidity, room_temp, room_pressure, DATA)
-    return ""
+        # Save Sample csv and generate report
+        if sample_bool:
+            new_functions.save_csv(SAVE_LOCATION + '/SAMPLE.csv', room_humidity, room_temp, room_pressure, DATA)
+            global CONSOLE
+            unique_values = [job_no, client, specimen_name, specimen_desc, specimen_size, specimen_mass, specimen_area,
+                             room_temp, room_humidity, room_pressure]
+            try:
+                auto_report.changeValues(SAVE_LOCATION, bracket_type, unique_values)
+                CONSOLE += "\nReport Created"
+            except:
+                CONSOLE += "\nError in Reporting Process"
+            return hz_table
+        else:
+            # Save No_Sample csv and generate table
+            SAVE_LOCATION += '/NO_SAMPLE.csv'
+            new_functions.save_csv(SAVE_LOCATION + '/NO_SAMPLE.csv', room_humidity, room_temp, room_pressure, DATA)
+            table_values = [['<b>RT</b>', '<b>Pass/Fail</b>']]
+            hz_out = auto_report.full_values(SAVE_LOCATION)
+            colour_map = ["white"]
+            for entry in hz_out:
+                table_values.append(('{0:.2f}'.format(entry[0]), entry[1]))
+                if entry[1] == 1:
+                    colour_map.append(("white", "lightgreen"))
+                else:
+                    colour_map.append(("white", "lightred"))
+            return go.Figure(
+                data=[go.Table(header=dict(values=hz_list), cells=dict(values=table_values, fill_color=colour_map))])
 
 
+# Save folder location
 @app.callback(
-    dash.dependencies.Output('save_out', 'children'),
+    dash.dependencies.Output('start_btn', 'disabled'),
     dash.dependencies.Input('save_btn', 'n_clicks'),
     dash.dependencies.State('save_data', 'value'),
     dash.dependencies.State('room_humidity', 'value'),
@@ -286,7 +329,7 @@ def trigger_measurements(n_clicks, number_of_runs, decay_time, noise_type, db_de
 def save_data(n_clicks, save_data, rh, room_temperature, pressure):
     global SAVING
     if SAVING:
-        return ""
+        return True
     else:
         if n_clicks > 0:
             SAVING = True
@@ -298,29 +341,11 @@ def save_data(n_clicks, save_data, rh, room_temperature, pressure):
             SAVE_LOCATION = save_file_name
             print("Save location changed to " + save_file_name)
             logger.add_text("Save location changed to " + save_file_name)
-        return ""
+            return False
+        return True
 
 
-@app.callback(
-    dash.dependencies.Output('frequency-table', 'figure'),
-    dash.dependencies.Input('test_btn', 'n_clicks')
-)
-def test_func(n_clicks):
-    print(n_clicks)
-    if n_clicks > 0:
-        table_values = [['<b>RT</b>', '<b>Pass/Fail</b>']]
-        hz_out = auto_report.full_values(SAVE_LOCATION)
-        colour_map = ["white"]
-        for entry in hz_out:
-            table_values.append(('{0:.2f}'.format(entry[0]), entry[1]))
-            if entry[1] == 1:
-                colour_map.append(("white", "lightgreen"))
-            else:
-                colour_map.append(("white", "lightred"))
-        return go.Figure(data=[go.Table(header=dict(values=hz_list), cells=dict(values=table_values, fill_color=colour_map))])
-    else:
-        return hz_table
-
+# Logger Loop
 @app.callback(
     dash.dependencies.Output('console_out_textarea', 'value'),
     dash.dependencies.Input('interval-component', 'n_intervals')
@@ -330,27 +355,6 @@ def addConsole(n_intervals):
         return logger.get_text()
     return ""
 
-@app.callback(
-    dash.dependencies.Output('report_out', 'children'),
-    dash.dependencies.Input('report_btn', 'n_clicks')
-)
-def reportData(n_clicks):
-    if n_clicks > 0:
-        global CONSOLE
-        import tkinter as tk
-        from tkinter import filedialog
-        # Choose Location
-        root = tk.Tk()
-        root.withdraw()#####
-        root.wm_attributes('-topmost', 1)
-        # TODO: Save to folder
-        # Run Report Process
-        try:
-            # auto_report.changeValues(save_filename)
-            CONSOLE += "\nReport Created"
-        except:
-            CONSOLE += "\nError in Reporting Process"
-    return ""
 
 if __name__ == '__main__':
     app.run_server(debug=True)

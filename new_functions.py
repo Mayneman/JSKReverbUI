@@ -10,10 +10,12 @@ import logger
 from runReverberationTimeTests import performMeasurement
 from calculateReverberationTimes import performRTcalculation
 
+
 # Take parameters from GUI and start room measurement - this is a blocking action and will preclude use of the front end software during measurements
 def triggerMeasurements(n_runs, decay_time, noise_color, source_volume):
     decay_results = performMeasurement(n_runs, decay_time=decay_time, noise_color=noise_color, source_volume=source_volume)
     print('Measurement completed with {} runs'.format(n_runs))
+    logger.add_text('Measurement completed with {} runs'.format(n_runs))
     print('Decay of {} seconds'.format(decay_time))
     print('Noise color: {}'.format(noise_color))
     return decay_results
@@ -21,11 +23,11 @@ def triggerMeasurements(n_runs, decay_time, noise_color, source_volume):
 
 # Take results from measurements and perform RT calculations according to ISO 354 methodology
 def triggerRTcalc(decay_results, decay_time, db_decay, volume, temp, relativeHumidity, pressure):
-
     reverberationTimes = performRTcalculation(data=decay_results, volume=volume, temp=temp, relativeHumidity=relativeHumidity, pressure=pressure, db_decay=db_decay, decay_time=float(decay_time))
     print("Reverb time calculated")
-    print(reverberationTimes)
+    print("Reverb time calculated")
     return reverberationTimes
+
 
 # Store environmental data and calculated reverberation times in a CSV file
 def save_data(e1_df, env_df, filename):
@@ -36,6 +38,7 @@ def save_data(e1_df, env_df, filename):
         if type(env_df) is not list and env_df is not None:
             env_df.to_csv(f)
     return 1
+
 
 # Store raw measurement data as a npy file for future processing or plotting
 def save_raw_data(raw_data, filename):
@@ -67,9 +70,9 @@ def buildRH_TempDF(meas1_RH, meas1_T, meas1_P):
 
 def save_csv(save_filename, rh, room_temperature, pressure, data):
     env_df = buildRH_TempDF(rh, room_temperature, pressure)
-    save_data(data, env_df=env_df, filename=save_filename + '/NO_SAMPLE.csv')
-    logger.add_text('NO_SAMPLE.CSV saved in ' + save_filename + '/NO_SAMPLE.csv')
-    print('NO_SAMPLE.CSV saved in ' + save_filename + '/NO_SAMPLE.csv')
+    save_data(data, env_df=env_df, filename=save_filename)
+    logger.add_text(save_filename + 'has been created and saved.')
+    print(save_filename + '/NO_SAMPLE.csv')
     return
 
 

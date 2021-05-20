@@ -8,6 +8,7 @@ import sys
 import filterAndBands
 import helpers
 import iso354
+import logger
 
 # import standard for calculation of absorption area
 
@@ -70,6 +71,7 @@ def performRTcalculation(data, volume, temp, relativeHumidity, pressure, db_deca
     # Step though mics and calculate RT
     for mic in mics:
         print('Calculating RT for mic: {}'.format(mic))
+        logger.add_text('Calculating RT for mic: {}'.format(mic))
         # Perform 3rd octave filters
         print('Applying 1/3rd Octave filters to data between {}Hz - {}Hz'.format(fLow, fHigh))
         filtered_data = filterAndBands.thirdOctFilters(data=df['mean_{}'.format(mic)], fs=fs, f_low=fLow, f_high=fHigh)
