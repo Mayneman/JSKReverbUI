@@ -7,6 +7,7 @@ import dash_table
 import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
+import traceback
 
 # Cleaner function interface
 import new_functions
@@ -21,7 +22,7 @@ CONSOLE = "UI Initialized"
 
 # Init dash app4
 external_stylesheets = [dbc.themes.BOOTSTRAP, 'main.css']
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+app = dash.Dash(__name__, external_stylesheets=external_stylesheets, prevent_initial_callbacks=True)
 app.title = "Reverb Room"
 
 SIDEBAR_STYLE = {
@@ -277,44 +278,50 @@ app.layout = html.Div([
     dash.dependencies.State('specimen_mass', 'value'),
     dash.dependencies.State('specimen_area', 'value'),
 )
-def trigger_measurements(n_clicks, number_of_runs, sample_bool, decay_time, noise_type, db_decay, room_volume, room_temp,
+def trigger_measurements(n_clicks, sample_bool, number_of_runs, decay_time, noise_type, db_decay, room_volume, room_temp,
                          room_humidity, room_pressure, bracket_type, job_no, client, specimen_name, specimen_desc,
                          specimen_size, specimen_mass, specimen_area):
     if n_clicks > 0:
-        print("Submitting Parameters for Measurements")
-        print(number_of_runs, decay_time, noise_type, room_volume)
-        global DATA
-        global SAVE_LOCATION
-        # Run Measurements
-        DATA = new_functions.new_meas1(number_of_runs, decay_time, noise_type, db_decay, room_temp, room_humidity,
-                                       room_pressure, 100)
-        # Save Sample csv and generate report
-        if sample_bool:
-            new_functions.save_csv(SAVE_LOCATION + '/SAMPLE.csv', room_humidity, room_temp, room_pressure, DATA)
-            global CONSOLE
-            unique_values = [job_no, client, specimen_name, specimen_desc, specimen_size, specimen_mass, specimen_area,
-                             room_temp, room_humidity, room_pressure]
-            try:
-                auto_report.changeValues(SAVE_LOCATION, bracket_type, unique_values)
-                CONSOLE += "\nReport Created"
-            except:
-                CONSOLE += "\nError in Reporting Process"
-            return hz_table
-        else:
-            # Save No_Sample csv and generate table
-            SAVE_LOCATION += '/NO_SAMPLE.csv'
-            new_functions.save_csv(SAVE_LOCATION + '/NO_SAMPLE.csv', room_humidity, room_temp, room_pressure, DATA)
-            table_values = [['<b>RT</b>', '<b>Pass/Fail</b>']]
-            hz_out = auto_report.full_values(SAVE_LOCATION)
-            colour_map = ["white"]
-            for entry in hz_out:
-                table_values.append(('{0:.2f}'.format(entry[0]), entry[1]))
-                if entry[1] == 1:
-                    colour_map.append(("white", "lightgreen"))
-                else:
-                    colour_map.append(("white", "lightred"))
-            return go.Figure(
-                data=[go.Table(header=dict(values=hz_list), cells=dict(values=table_values, fill_color=colour_map))])
+            print("Submitting Parameters for Measurements")
+            print(number_of_runs, decay_time, noise_type, room_volume)
+            global DATA
+            global SAVE_LOCATION
+            # Run Measurements
+            DATA = new_functions.new_meas1(number_of_runs, decay_time, noise_type, db_decay, room_temp, room_humidity,
+                                           room_pressure, 100)
+            # Save Sample csv and generate report
+            if sample_bool:
+                new_functions.save_csv(SAVE_LOCATION + '/SAMPLE.csv', room_humidity, room_temp, room_pressure, DATA)
+                global CONSOLE
+                unique_values = [job_no, client, specimen_name, specimen_desc, specimen_size, specimen_mass, specimen_area,
+                                 room_temp, room_humidity, room_pressure]
+                try:
+                    auto_report.full_values(SAVE_LOCATION + '/SAMPLE.csv')
+                    auto_report.changeValues(SAVE_LOCATION, bracket_type, unique_values)
+                    logger.add_text("Report Created for " + bracket_type)
+                except Exception as e:
+                    print(traceback.print_exc())
+                    logger.add_text("Error in Reporting Process, check Python console.")
+                return hz_table
+            else:
+                    # Save No_Sample csv and generate table
+                    new_functions.save_csv(SAVE_LOCATION + '/NO_SAMPLE.csv', room_humidity, room_temp, room_pressure, DATA)
+                    table_values = [['<b>RT</b>', '<b>Pass/Fail</b>']]
+                    hz_out = auto_report.full_values(SAVE_LOCATION + '/NO_SAMPLE.csv')
+                    colour_map = ["white"]
+                    for entry in hz_out:
+                        table_values.append(('{0:.2f}'.format(entry[0]), entry[1]))
+                        if entry[1] == 1:
+                            colour_map.append(("white", "lightgreen"))
+                        else:
+                            colour_map.append(("white", "darksalmon"))
+
+                    new_table = go.Figure(
+                        data=[go.Table(header=dict(values=hz_list), cells=dict(values=table_values, fill_color=colour_map))])
+                    new_table.update_layout(height=120, margin=dict(r=50, l=50, t=10, b=5))
+                    return new_table
+    else:
+        return hz_table
 
 
 # Save folder location

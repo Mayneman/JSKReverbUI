@@ -32,9 +32,9 @@ def triggerRTcalc(decay_results, decay_time, db_decay, volume, temp, relativeHum
 # Store environmental data and calculated reverberation times in a CSV file
 def save_data(e1_df, env_df, filename):
     print('Creating file and storing data')
-    with open('{}.csv'.format(filename), mode='w') as f:
+    with open(filename, mode='w') as f:
         e1_df.to_csv(f)
-    with open('{}.csv'.format(filename), mode='a') as f:
+    with open(filename, mode='a') as f:
         if type(env_df) is not list and env_df is not None:
             env_df.to_csv(f)
     return 1
@@ -71,8 +71,8 @@ def buildRH_TempDF(meas1_RH, meas1_T, meas1_P):
 def save_csv(save_filename, rh, room_temperature, pressure, data):
     env_df = buildRH_TempDF(rh, room_temperature, pressure)
     save_data(data, env_df=env_df, filename=save_filename)
-    logger.add_text(save_filename + 'has been created and saved.')
-    print(save_filename + '/NO_SAMPLE.csv')
+    logger.add_text(save_filename + ' has been created and saved.')
+    print(save_filename)
     return
 
 

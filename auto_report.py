@@ -3,17 +3,16 @@ from decimal import Decimal
 
 import pandas as pd
 from openpyxl import load_workbook
-import win32com.client as win32
 import os
-import pythoncom
 from docxtpl import DocxTemplate, InlineImage
 import datetime
 from docx.shared import Mm
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
+
 # ---EXCEL---
 def get_raw_values(filename):
-    df = pd.read_csv(filename)[1:41:2]
+    df = pd.read_csv(filename, engine='python')
     data_dict = {}
     for row in range(0, 18):
         rd = df.iloc[row]
@@ -25,16 +24,20 @@ def get_raw_values(filename):
 
 
 def update_excel(file):
-    pythoncom.CoInitialize()
-    excel = win32.Dispatch('Excel.Application')
-    workbook = excel.Workbooks.Open(ROOT_DIR + '/' + file)
-    # Get Chart
-    sheet = workbook.Sheets('Output for Report')
-    for chartObject in sheet.ChartObjects():
-        chartObject.Chart.Export(ROOT_DIR + "/ReportFiles/chartImage.png")
-    workbook.Save()
-    workbook.Close()
-    excel.Quit()
+    import xlwings as xw
+    # open Excel app in the background
+    app_excel = xw.App(visible=False)
+    wbk = xw.Book(file)
+    wbk.api.RefreshAll()
+    wbk.save()
+    # # kill Excel process
+    app_excel.kill()
+    del app_excel
+    # office = win32.Dispatch("Excel.Application")
+    # wb = office.Workbooks.Open(file)
+    # wb.RefreshAll()
+    # wb.Save()
+    # wb.Close()
 
 
 def to_excel(file, data):
@@ -69,12 +72,14 @@ def get_excel(file):
     for value in value_range:
         s = str(value)
         result_list.append((ws['L' + s].value, ws['M' + s].value))
+    workbook.close()
+    print('RESULT_LIST:' + result_list)
     return result_list
 
 
 # Complete entire csv data transaction.
 def full_values(csv):
-    file = "ReportFiles/rt_calc.xlsm"
+    file = ROOT_DIR + "\\ReportFiles\\rt_calc.xlsm"
     data = get_raw_values(csv)
     to_excel(file, data)
     update_excel(file)
@@ -104,10 +109,10 @@ def report_output(file):
 # ---WORD---
 def changeValues(save_location, bracket_type, values):
     # Import Template
-    template = DocxTemplate('ReportFiles/' + bracket_type + '.docx')
+    template = DocxTemplate(ROOT_DIR + '\\ReportFiles\\Templates\\' + bracket_type + '.docx')
     # Date
     x = datetime.datetime.now()
-    hz_table, psac, wsac, snr = report_output("ReportFiles/rt_calc.xlsm")
+    hz_table, psac, wsac, snr = report_output(ROOT_DIR + "\\ReportFiles\\rt_calc.xlsm")
     # TODO: Gather actual values.
     context = {
         'report_number': values[0],
@@ -116,9 +121,9 @@ def changeValues(save_location, bracket_type, values):
         'client': values[1],
         'specimen_name': values[2],
         'specimen_desc': values[3],
-        'specimen_size': values[4],
-        'specimen_mass': values[5],
-        'specimen_area': values[6],
+        'A': values[4],
+        'B': values[5],
+        'C': values[6],
         'temperature': values[7],
         'humidity': values[8],
         'pressure': values[9],
@@ -126,9 +131,15 @@ def changeValues(save_location, bracket_type, values):
         'psac': psac,
         'wsac': wsac,
         'snr': snr,
-        'chart': InlineImage(template, 'ReportFiles/chartImage.png', width=Mm(105))
+        'chart': InlineImage(template, ROOT_DIR + '\\ReportFiles\\chartImage.png', width=Mm(105))
     }
+    print(context)
     # Apply Values
     template.render(context)
     # Save Template
-    template.save(save_location + '/Report.docx')
+    template.save(save_location + '\\Report.docx')
+
+# full_values(ROOT_DIR + "/ReportFiles/NO_SAMPLE.csv")
+
+# values = get_excel(ROOT_DIR + "\\ReportFiles\\rt_calc.xlsm")
+# print(values)
