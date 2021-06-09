@@ -154,7 +154,9 @@ controls = html.Div(
             html.Button('Start Measurement', id='start_btn', className="btn btn-primary", disabled=True,
                         style={"marginBottom": "10px", "marginRight": "10px"},
                         n_clicks=0),
-            html.Button('Save As', id='save_btn', className="btn btn-success", style={"marginBottom": "10px"}, n_clicks=0),
+            html.Button('Save As', id='save_btn', className="btn btn-success", style={"marginBottom": "10px", "marginRight": "10px"}, n_clicks=0),
+            html.Button('RT Check', id='csv_check', className="btn btn-warning", style={"marginBottom": "10px"},
+                        disabled=True, n_clicks=0),
         ]),
     ])
 
@@ -162,7 +164,7 @@ textarea = html.Div(id='textarea_container',
      style={
             'overflow': 'auto',
             'display': 'flex',
-            'flex-direction': 'column-reverse'},
+            'flexDirection': 'column-reverse'},
     children=[
             dcc.Textarea(id='console_out_textarea', disabled=True, value=CONSOLE,
                               style={'width': '100%', 'height': 100}),
@@ -258,7 +260,7 @@ app.layout = html.Div([
 
 # Main Function, measure and report/display RT
 @app.callback(
-    dash.dependencies.Output('frequency-table', 'figure'),
+    dash.dependencies.Output('measure_out', 'children'),
     dash.dependencies.Input('start_btn', 'n_clicks'),
     dash.dependencies.State('sample_bool', 'value'),
     dash.dependencies.State('number_of_runs', 'value'),
@@ -302,31 +304,20 @@ def trigger_measurements(n_clicks, sample_bool, number_of_runs, decay_time, nois
                 except Exception as e:
                     print(traceback.print_exc())
                     logger.add_text("Error in Reporting Process, check Python console.")
-                return hz_table
+                return ''
             else:
-                    # Save No_Sample csv and generate table
-                    new_functions.save_csv(SAVE_LOCATION + '/NO_SAMPLE.csv', room_humidity, room_temp, room_pressure, DATA)
-                    table_values = [['<b>RT</b>', '<b>Pass/Fail</b>']]
-                    hz_out = auto_report.full_values(SAVE_LOCATION + '/NO_SAMPLE.csv')
-                    colour_map = ["white"]
-                    for entry in hz_out:
-                        table_values.append(('{0:.2f}'.format(entry[0]), entry[1]))
-                        if entry[1] == 1:
-                            colour_map.append(("white", "lightgreen"))
-                        else:
-                            colour_map.append(("white", "darksalmon"))
-
-                    new_table = go.Figure(
-                        data=[go.Table(header=dict(values=hz_list), cells=dict(values=table_values, fill_color=colour_map))])
-                    new_table.update_layout(height=120, margin=dict(r=50, l=50, t=10, b=5))
-                    return new_table
+                # Save No_Sample csv and generate table
+                new_functions.save_csv(SAVE_LOCATION + '/NO_SAMPLE.csv', room_humidity, room_temp, room_pressure, DATA)
+                logger.add_text("NO_SAMPLE.csv has been saved, use RT Check to see values.")
+                return ''
     else:
-        return hz_table
+        return ''
 
 
 # Save folder location
 @app.callback(
     dash.dependencies.Output('start_btn', 'disabled'),
+    dash.dependencies.Output('csv_check', 'disabled'),
     dash.dependencies.Input('save_btn', 'n_clicks'),
     dash.dependencies.State('save_data', 'value'),
     dash.dependencies.State('room_humidity', 'value'),
@@ -348,8 +339,43 @@ def save_data(n_clicks, save_data, rh, room_temperature, pressure):
             SAVE_LOCATION = save_file_name
             print("Save location changed to " + save_file_name)
             logger.add_text("Save location changed to " + save_file_name)
-            return False
-        return True
+            return False, False
+        return True, True
+
+
+# Check CSV
+@app.callback(
+    dash.dependencies.Output('frequency-table', 'figure'),
+    dash.dependencies.Input('csv_check', 'n_clicks'),
+)
+def csv_check(n_clicks):
+    if n_clicks > 0:
+        global SAVING
+        global SAVE_LOCATION
+        try:
+            f = open(SAVE_LOCATION + '/NO_SAMPLE.csv')
+            # Do something with the file
+            f.close()
+        except IOError:
+            print("File not accessible")
+            logger.add_text("NO_SAMPLE does not exist.")
+            return hz_table
+        table_values = [['<b>RT</b>', '<b>Pass/Fail</b>']]
+        hz_out = auto_report.full_values(SAVE_LOCATION + '/NO_SAMPLE.csv')
+        colour_map = ["white"]
+        for entry in hz_out:
+            table_values.append(('{0:.2f}'.format(entry[0]), entry[1]))
+            if entry[1] == 1:
+                colour_map.append(("white", "lightgreen"))
+            else:
+                colour_map.append(("white", "darksalmon"))
+
+        new_table = go.Figure(
+            data=[go.Table(header=dict(values=hz_list), cells=dict(values=table_values, fill_color=colour_map))])
+        new_table.update_layout(height=120, margin=dict(r=50, l=50, t=10, b=5))
+        return new_table
+    else:
+        return hz_table
 
 
 # Logger Loop

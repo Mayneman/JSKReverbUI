@@ -6,7 +6,9 @@ from openpyxl import load_workbook
 import os
 from docxtpl import DocxTemplate, InlineImage
 import datetime
+import pythoncom
 from docx.shared import Mm
+import xlwings as xw
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -24,15 +26,21 @@ def get_raw_values(filename):
 
 
 def update_excel(file):
-    import xlwings as xw
     # open Excel app in the background
+    pythoncom.CoInitialize()
     app_excel = xw.App(visible=False)
+    print('app excel')
     wbk = xw.Book(file)
+    print('book')
     wbk.api.RefreshAll()
+    print('ref')
     wbk.save()
+    print('save')
     # # kill Excel process
     app_excel.kill()
+    print('kill')
     del app_excel
+    print('del')
     # office = win32.Dispatch("Excel.Application")
     # wb = office.Workbooks.Open(file)
     # wb.RefreshAll()
@@ -42,6 +50,7 @@ def update_excel(file):
 
 def to_excel(file, data):
     workbook = load_workbook(filename=file, read_only=False, keep_vba=True)
+    print('loaded Workbook')
     ws = workbook.worksheets[0]
     list_of_rows = list(range(5,40,2))
     # Main Values
@@ -56,12 +65,16 @@ def to_excel(file, data):
         ws['G' + str(i)] = float(entry[5])
         ws['H' + str(i)] = float(entry[6])
         ws['I' + str(i)] = float(entry[7])
+    print('Paste Values')
     # Env Variables
     ws['B43'] = data['rh']
     ws['C43'] = data['temp']
     ws['D43'] = data['pressure']
     workbook.save(file)
+    print('Save Values')
     workbook.close()
+    print('Close')
+    return
 
 
 def get_excel(file):
@@ -73,17 +86,21 @@ def get_excel(file):
         s = str(value)
         result_list.append((ws['L' + s].value, ws['M' + s].value))
     workbook.close()
-    print('RESULT_LIST:' + result_list)
     return result_list
 
 
 # Complete entire csv data transaction.
 def full_values(csv):
     file = ROOT_DIR + "\\ReportFiles\\rt_calc.xlsm"
+    print(file)
     data = get_raw_values(csv)
+    print('data')
     to_excel(file, data)
+    print('to_excel')
     update_excel(file)
+    print('update_excel')
     values = get_excel(file)
+    print('values')
     return values
 
 
@@ -140,6 +157,6 @@ def changeValues(save_location, bracket_type, values):
     template.save(save_location + '\\Report.docx')
 
 # full_values(ROOT_DIR + "/ReportFiles/NO_SAMPLE.csv")
-
+# update_excel(ROOT_DIR + "\\ReportFiles\\rt_calc.xlsm")
 # values = get_excel(ROOT_DIR + "\\ReportFiles\\rt_calc.xlsm")
 # print(values)
