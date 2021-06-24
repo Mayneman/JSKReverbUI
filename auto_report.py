@@ -9,6 +9,7 @@ import datetime
 import pythoncom
 from docx.shared import Mm
 import xlwings as xw
+from shutil import copyfile
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -41,12 +42,7 @@ def update_excel(file):
     print('kill')
     del app_excel
     print('del')
-    # office = win32.Dispatch("Excel.Application")
-    # wb = office.Workbooks.Open(file)
-    # wb.RefreshAll()
-    # wb.Save()
-    # wb.Close()
-
+    return
 
 def to_excel(file, data):
     workbook = load_workbook(filename=file, read_only=False, keep_vba=True)
@@ -76,7 +72,12 @@ def to_excel(file, data):
     print('Close')
     return
 
+def save_excel(file, save):
+    copyfile(file, save)
+    return
 
+
+# Get values for report
 def get_excel(file):
     workbook = load_workbook(filename=file, data_only=True)
     ws = workbook.worksheets[0]
@@ -90,7 +91,7 @@ def get_excel(file):
 
 
 # Complete entire csv data transaction.
-def full_values(csv):
+def full_values(csv, xlsm):
     file = ROOT_DIR + "\\ReportFiles\\rt_calc.xlsm"
     print(file)
     data = get_raw_values(csv)
@@ -99,6 +100,8 @@ def full_values(csv):
     print('to_excel')
     update_excel(file)
     print('update_excel')
+    save_excel(file, xlsm)
+    print('save')
     values = get_excel(file)
     print('values')
     return values
