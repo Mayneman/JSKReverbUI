@@ -1,9 +1,10 @@
 pip install pandas
 pip install scipy
-pip install nidaqmxpip install nidaqmx
+pip install nidaqmx
 pip install dash
 pip install dash-bootstrap-components
 pip install dash_daq
 pip install openpyxl
 pip install pywin32
 pip install docxtpl
+pip install xlwings

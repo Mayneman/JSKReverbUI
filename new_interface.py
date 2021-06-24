@@ -285,6 +285,14 @@ def trigger_measurements(n_clicks, sample_bool, number_of_runs, decay_time, nois
                          specimen_size, specimen_mass, specimen_area):
     if n_clicks > 0:
             print("Submitting Parameters for Measurements")
+            print("No. of Runs: " + str(number_of_runs))
+            print("Decay Time: " + str(decay_time))
+            print("Noise Type: " + str(noise_type))
+            print("DB Decay: " + str(db_decay))
+            print("Room Temp: " + str(room_temp))
+            print("Room Humidity: " + str(room_humidity))
+            print("Room Pressure: " + str(room_pressure))
+
             print(number_of_runs, decay_time, noise_type, room_volume)
             global DATA
             global SAVE_LOCATION
@@ -304,14 +312,14 @@ def trigger_measurements(n_clicks, sample_bool, number_of_runs, decay_time, nois
                 except Exception as e:
                     print(traceback.print_exc())
                     logger.add_text("Error in Reporting Process, check Python console.")
-                return ''
+                raise dash.exceptions.PreventUpdate
             else:
                 # Save No_Sample csv and generate table
                 new_functions.save_csv(SAVE_LOCATION + '/NO_SAMPLE.csv', room_humidity, room_temp, room_pressure, DATA)
                 logger.add_text("NO_SAMPLE.csv has been saved, use RT Check to see values.")
-                return ''
+                raise dash.exceptions.PreventUpdate
     else:
-        return ''
+        raise dash.exceptions.PreventUpdate
 
 
 # Save folder location
@@ -359,7 +367,7 @@ def csv_check(n_clicks):
         except IOError:
             print("File not accessible")
             logger.add_text("NO_SAMPLE does not exist.")
-            return hz_table
+            raise dash.exceptions.PreventUpdate
         table_values = [['<b>RT</b>', '<b>Pass/Fail</b>']]
         hz_out = auto_report.full_values(SAVE_LOCATION + '/NO_SAMPLE.csv')
         colour_map = ["white"]
@@ -375,7 +383,7 @@ def csv_check(n_clicks):
         new_table.update_layout(height=120, margin=dict(r=50, l=50, t=10, b=5))
         return new_table
     else:
-        return hz_table
+        raise dash.exceptions.PreventUpdate
 
 
 # Logger Loop
@@ -386,8 +394,8 @@ def csv_check(n_clicks):
 def addConsole(n_intervals):
     if n_intervals != 0:
         return logger.get_text()
-    return ""
+    raise dash.exceptions.PreventUpdate
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server()
