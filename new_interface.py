@@ -298,7 +298,7 @@ def trigger_measurements(n_clicks, sample_bool, number_of_runs, decay_time, nois
             global SAVE_LOCATION
             # Run Measurements
             DATA = new_functions.new_meas1(number_of_runs, decay_time, noise_type, db_decay, room_temp, room_humidity,
-                                           room_pressure, 100)
+                                           room_pressure, room_volume)
             # Save Sample csv and generate report
             if sample_bool:
                 new_functions.save_csv(SAVE_LOCATION + '/SAMPLE.csv', room_humidity, room_temp, room_pressure, DATA)
