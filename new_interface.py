@@ -306,7 +306,7 @@ def trigger_measurements(n_clicks, sample_bool, number_of_runs, decay_time, nois
                 unique_values = [job_no, client, specimen_name, specimen_desc, specimen_size, specimen_mass, specimen_area,
                                  room_temp, room_humidity, room_pressure]
                 try:
-                    auto_report.full_values(SAVE_LOCATION + '/SAMPLE.csv', SAVE_LOCATION + '/SAMPLE.xlsm')
+                    auto_report.full_values(SAVE_LOCATION + '/SAMPLE.csv', SAVE_LOCATION + '/SAMPLE.xlsm', 1)
                     logger.add_text("Saved the updated excel workbook to save location.")
                     auto_report.changeValues(SAVE_LOCATION, bracket_type, unique_values)
                     logger.add_text("Report Created for " + bracket_type)
@@ -317,7 +317,7 @@ def trigger_measurements(n_clicks, sample_bool, number_of_runs, decay_time, nois
             else:
                 # Save No_Sample csv and generate table
                 new_functions.save_csv(SAVE_LOCATION + '/NO_SAMPLE.csv', room_humidity, room_temp, room_pressure, DATA)
-                auto_report.full_values(SAVE_LOCATION + '/NO_SAMPLE.csv', SAVE_LOCATION + '/NO_SAMPLE.xlsm')
+                auto_report.full_values(SAVE_LOCATION + '/NO_SAMPLE.csv', SAVE_LOCATION + '/NO_SAMPLE.xlsm', 0)
                 logger.add_text("NO_SAMPLE.csv has been saved, use RT Check to see values.")
                 raise dash.exceptions.PreventUpdate
     else:

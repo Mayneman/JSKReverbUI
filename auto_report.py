@@ -72,6 +72,34 @@ def to_excel(file, data):
     print('Close')
     return
 
+def to_excel_sample(file, data):
+    workbook = load_workbook(filename=file, read_only=False, keep_vba=True)
+    print('loaded Workbook')
+    ws = workbook.worksheets[1]
+    list_of_rows = list(range(5,40,2))
+    # Main Values
+    for i in list_of_rows:
+        freq = str(ws['D' + str(i)].value)
+        entry = data[freq]
+        ws['E' + str(i)] = float(entry[0])
+        ws['F' + str(i)] = float(entry[1])
+        ws['G' + str(i)] = float(entry[2])
+        ws['H' + str(i)] = float(entry[3])
+        ws['I' + str(i)] = float(entry[4])
+        ws['J' + str(i)] = float(entry[5])
+        ws['K' + str(i)] = float(entry[6])
+        ws['L' + str(i)] = float(entry[7])
+    print('Paste Values')
+    # Env Variables
+    ws['E43'] = data['rh']
+    ws['F43'] = data['temp']
+    ws['G43'] = data['pressure']
+    workbook.save(file)
+    print('Save Values (Sample)')
+    workbook.close()
+    print('Close')
+    return
+
 def save_excel(file, save):
     copyfile(file, save)
     return
@@ -91,12 +119,15 @@ def get_excel(file):
 
 
 # Complete entire csv data transaction.
-def full_values(csv, xlsm):
+def full_values(csv, xlsm, sample):
     file = ROOT_DIR + "\\ReportFiles\\rt_calc.xlsm"
     print(file)
     data = get_raw_values(csv)
     print('data')
-    to_excel(file, data)
+    if sample:
+        to_excel_sample(file, data)
+    else:
+        to_excel(file, data)
     print('to_excel')
     update_excel(file)
     print('update_excel')
