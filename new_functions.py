@@ -52,9 +52,11 @@ def save_raw_data(raw_data, filename):
 
 def new_meas1(number_of_runs, decay_time, noise_type, db_decay, room_temp, room_humidity, room_pressure, volume):
     print('Number of runs: {} \nDecay time: {} \nNoise color: {} \n'.format(number_of_runs, decay_time, noise_type))
-    decay_results = triggerMeasurements(number_of_runs, decay_time, noise_type, volume)
+    # USE 0-100 HERE
+    decay_results = triggerMeasurements(number_of_runs, decay_time, noise_type, 100)
     print('Measurement completed - calculating reverb times')
     # decay_results, db_decay, decay_time, volume, temp, relativeHumidity, pressure
+    # USE 219 HERE
     data1 = triggerRTcalc(decay_results, decay_time, db_decay, volume,
                                room_temp, room_humidity, room_pressure)
     print('Reverb time calculation completed')

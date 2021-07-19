@@ -306,7 +306,7 @@ def trigger_measurements(n_clicks, sample_bool, number_of_runs, decay_time, nois
                 unique_values = [job_no, client, specimen_name, specimen_desc, specimen_size, specimen_mass, specimen_area,
                                  room_temp, room_humidity, room_pressure]
                 try:
-                    auto_report.full_values(SAVE_LOCATION + '/SAMPLE.csv', SAVE_LOCATION + '/SAMPLE.xlsm', 1)
+                    auto_report.full_values(SAVE_LOCATION + '/SAMPLE.csv', SAVE_LOCATION + '/SAMPLE_CALCS.xlsm', 1)
                     logger.add_text("Saved the updated excel workbook to save location.")
                     auto_report.changeValues(SAVE_LOCATION, bracket_type, unique_values)
                     logger.add_text("Report Created for " + bracket_type)
@@ -317,7 +317,7 @@ def trigger_measurements(n_clicks, sample_bool, number_of_runs, decay_time, nois
             else:
                 # Save No_Sample csv and generate table
                 new_functions.save_csv(SAVE_LOCATION + '/NO_SAMPLE.csv', room_humidity, room_temp, room_pressure, DATA)
-                auto_report.full_values(SAVE_LOCATION + '/NO_SAMPLE.csv', SAVE_LOCATION + '/NO_SAMPLE.xlsm', 0)
+                auto_report.full_values(SAVE_LOCATION + '/NO_SAMPLE.csv', SAVE_LOCATION + '/NO_SAMPLE_CALCS.xlsm', 0)
                 logger.add_text("NO_SAMPLE.csv has been saved, use RT Check to see values.")
                 raise dash.exceptions.PreventUpdate
     else:
@@ -371,7 +371,7 @@ def csv_check(n_clicks):
             logger.add_text("NO_SAMPLE does not exist.")
             raise dash.exceptions.PreventUpdate
         table_values = [['<b>RT</b>', '<b>Pass/Fail</b>']]
-        hz_out = auto_report.get_excel(SAVE_LOCATION + '/NO_SAMPLE.csv')
+        hz_out = auto_report.get_excel(SAVE_LOCATION + '/NO_SAMPLE_CALCS.xlsm')
         colour_map = ["white"]
         for entry in hz_out:
             table_values.append(('{0:.2f}'.format(entry[0]), entry[1]))
