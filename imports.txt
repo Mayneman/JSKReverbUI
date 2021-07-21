@@ -8,3 +8,4 @@ pip install openpyxl
 pip install pywin32
 pip install docxtpl
 pip install xlwings
+pip install openpyxl-image-loader

@@ -8,11 +8,13 @@ import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
 import traceback
-
+from shutil import copyfile
 # Cleaner function interface
 import new_functions
 import auto_report
 import logger
+import os
+
 
 DATA = None
 SAVING = False
@@ -64,12 +66,12 @@ basic_settings = html.Div([
     ], style={"marginTop": "10px", "display": "flex", "alignItems": "left", "justifyContent": "left"}),
     html.Div([
         html.Label("No. of Runs", style={"width": "130px"}),
-        dcc.Input(id="number_of_runs", type="number", placeholder="No. of Runs", value=2,
+        dcc.Input(id="number_of_runs", type="number", placeholder="No. of Runs", value=9,
                   style={"width": "30%", "marginRight": "20%"})
     ]),
     html.Div([
         html.Label("Decay Time (sec)", style={"width": "130px"}),
-        dcc.Input(id="decay_time", type="number", placeholder="No. of Runs", value=4,
+        dcc.Input(id="decay_time", type="number", placeholder="No. of Runs", value=7,
                   style={"width": "30%", "marginRight": "20%"}),
     ]),
     html.Div([
@@ -85,7 +87,7 @@ basic_settings = html.Div([
                 {'label': 'White', 'value': 'White'},
                 {'label': 'Pink', 'value': 'Pink'}
             ],
-            value='White',
+            value='Pink',
             clearable=False,
             style={"width": "110px", "align": "right"}
         ),
@@ -115,7 +117,7 @@ basic_settings = html.Div([
                 {'label': 'E400 Mounting', 'value': 'E400'},
                 {'label': 'G Mounting', 'value': 'G'}
             ],
-            value='A',
+            value='E400',
             clearable=False,
             style={"width": "200px"}
         ),
@@ -156,6 +158,8 @@ controls = html.Div(
                         n_clicks=0),
             html.Button('Save As', id='save_btn', className="btn btn-success", style={"marginBottom": "10px", "marginRight": "10px"}, n_clicks=0),
             html.Button('RT Check', id='csv_check', className="btn btn-warning", style={"marginBottom": "10px"},
+                        disabled=True, n_clicks=0),
+            html.Button('Add Empty Room', id='add_empty', className="btn btn-info", style={"marginBottom": "10px", "marginRight": "10px"},
                         disabled=True, n_clicks=0),
         ]),
     ])
@@ -250,6 +254,7 @@ app.layout = html.Div([
     html.Div(id='measure_out'),
     html.Div(id='save_out'),
     html.Div(id='report_out'),
+    html.Div(id='empty_out'),
     html.Div(dcc.Interval(
             id='interval-component',
             interval=1*1000, # in milliseconds
@@ -328,6 +333,7 @@ def trigger_measurements(n_clicks, sample_bool, number_of_runs, decay_time, nois
 @app.callback(
     dash.dependencies.Output('start_btn', 'disabled'),
     dash.dependencies.Output('csv_check', 'disabled'),
+    dash.dependencies.Output('add_empty', 'disabled'),
     dash.dependencies.Input('save_btn', 'n_clicks'),
     dash.dependencies.State('save_data', 'value'),
     dash.dependencies.State('room_humidity', 'value'),
@@ -349,8 +355,8 @@ def save_data(n_clicks, save_data, rh, room_temperature, pressure):
             SAVE_LOCATION = save_file_name
             print("Save location changed to " + save_file_name)
             logger.add_text("Save location changed to " + save_file_name)
-            return False, False
-        return True, True
+            return False, False, False
+        return True, True, True
 
 
 # Check CSV
@@ -363,7 +369,7 @@ def csv_check(n_clicks):
         global SAVING
         global SAVE_LOCATION
         try:
-            f = open(SAVE_LOCATION + '/NO_SAMPLE.csv')
+            f = open(SAVE_LOCATION + '/NO_SAMPLE_CALCS.xlsm')
             # Do something with the file
             f.close()
         except IOError:
@@ -396,6 +402,19 @@ def csv_check(n_clicks):
 def addConsole(n_intervals):
     if n_intervals != 0:
         return logger.get_text()
+    raise dash.exceptions.PreventUpdate
+
+
+# Logger Loop
+@app.callback(
+    dash.dependencies.Output('empty_out', 'children'),
+    dash.dependencies.Input('add_empty', 'n_clicks')
+)
+def save_last_template(n_clicks):
+    if n_clicks > 0:
+        global SAVE_LOCATION
+        copyfile(os.path.dirname(os.path.abspath(__file__)) + "\\ReportFiles\\rt_calc.xlsm", SAVE_LOCATION + "\\NO_SAMPLE_CALCS.xlsm")
+        logger.add_text("Last used .xlsm file copied.")
     raise dash.exceptions.PreventUpdate
 
 

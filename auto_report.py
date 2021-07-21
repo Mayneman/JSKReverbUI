@@ -2,9 +2,11 @@
 from decimal import Decimal
 
 import pandas as pd
+import win32com
 from openpyxl import load_workbook
 import os
 from docxtpl import DocxTemplate, InlineImage
+from PIL import ImageGrab
 import datetime
 import pythoncom
 from docx.shared import Mm
@@ -118,6 +120,33 @@ def get_excel(file):
     return result_list
 
 
+def save_excel_image(inputExcelFilePath, outputPNGImagePath):
+    # Open the excel application using win32com
+    o = win32com.client.Dispatch("Excel.Application")
+    # Disable alerts and visibility to the user
+    o.Visible = 0
+    o.DisplayAlerts = 0
+    # Open workbook
+    wb = o.Workbooks.Open(inputExcelFilePath)
+
+    # Extract first sheet
+    sheet = o.Sheets(4)
+    print(sheet)
+    for n, shape in enumerate(sheet.Shapes):
+        print(shape)
+        # Save shape to clipboard, then save what is in the clipboard to the file
+        shape.Copy()
+        image = ImageGrab.grabclipboard()
+        # Saves the image into the existing png file (overwriting) TODO ***** Have try except?
+        image.save(outputPNGImagePath, 'png')
+        print('Image Saved to: ', outputPNGImagePath)
+        pass
+    pass
+    wb.Close(True)
+    o.Quit()
+    return
+
+
 # Complete entire csv data transaction.
 def full_values(csv, xlsm, sample):
     file = ROOT_DIR + "\\ReportFiles\\rt_calc.xlsm"
@@ -153,7 +182,8 @@ def report_output(file):
     wsac = ["%0.2f" % ws['C43'].value, ws['C44'].value, ws['C45'].value]
     # Single number ratings
     snr = ["%0.2f" % ws['B49'].value, "%0.2f" % ws['B50'].value]
-
+    workbook.close()
+    save_excel_image(file, ROOT_DIR + '\\ReportFiles\\chartImage.png')
     return hz_table, psac, wsac, snr
 
 
@@ -190,7 +220,10 @@ def changeValues(save_location, bracket_type, values):
     # Save Template
     template.save(save_location + '\\Report.docx')
 
+# TESTING BELOW CAN DELETE TO CLEAN CODE
+
 # full_values(ROOT_DIR + "/ReportFiles/NO_SAMPLE.csv")
 # update_excel(ROOT_DIR + "\\ReportFiles\\rt_calc.xlsm")
 # values = get_excel(ROOT_DIR + "\\ReportFiles\\rt_calc.xlsm")
 # print(values)
+# save_excel_image('C:\\Users\\Lab PC\\Desktop\\lewis_test\\SAMPLE_CALCS.xlsm', ROOT_DIR + '\\ReportFiles\\chartImage.png')
