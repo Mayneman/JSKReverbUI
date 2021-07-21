@@ -123,10 +123,10 @@ basic_settings = html.Div([
         ),
     ], style={"marginTop": "10px", "display": "flex", "alignItems": "left", "justifyContent": "left"}),
     html.Div([
-        html.Label("Save Raw Data", style={"width": "130px"}),
+        html.Label("Generate Report", style={"width": "130px"}),
         daq.ToggleSwitch(
-            id='save_data',
-            value=False,
+            id='report_bool',
+            value=True,
             color='#309143'
         ),
     ], style={"marginTop": "10px", "display": "flex", "alignItems": "left", "justifyContent": "left"}),
@@ -284,10 +284,11 @@ app.layout = html.Div([
     dash.dependencies.State('specimen_size', 'value'),
     dash.dependencies.State('specimen_mass', 'value'),
     dash.dependencies.State('specimen_area', 'value'),
+    dash.dependencies.State('report_bool', 'value'),
 )
 def trigger_measurements(n_clicks, sample_bool, number_of_runs, decay_time, noise_type, db_decay, room_volume, room_temp,
                          room_humidity, room_pressure, bracket_type, job_no, client, specimen_name, specimen_desc,
-                         specimen_size, specimen_mass, specimen_area):
+                         specimen_size, specimen_mass, specimen_area, report_bool):
     if n_clicks > 0:
             print("Submitting Parameters for Measurements")
             print("No. of Runs: " + str(number_of_runs))
@@ -313,8 +314,9 @@ def trigger_measurements(n_clicks, sample_bool, number_of_runs, decay_time, nois
                 try:
                     auto_report.full_values(SAVE_LOCATION + '/SAMPLE.csv', SAVE_LOCATION + '/SAMPLE_CALCS.xlsm', 1)
                     logger.add_text("Saved the updated excel workbook to save location.")
-                    auto_report.changeValues(SAVE_LOCATION, bracket_type, unique_values)
-                    logger.add_text("Report Created for " + bracket_type)
+                    if report_bool:
+                        auto_report.changeValues(SAVE_LOCATION, bracket_type, unique_values)
+                        logger.add_text("Report Created for " + bracket_type)
                 except Exception as e:
                     print(traceback.print_exc())
                     logger.add_text("Error in Reporting Process, check Python console.")
@@ -335,12 +337,11 @@ def trigger_measurements(n_clicks, sample_bool, number_of_runs, decay_time, nois
     dash.dependencies.Output('csv_check', 'disabled'),
     dash.dependencies.Output('add_empty', 'disabled'),
     dash.dependencies.Input('save_btn', 'n_clicks'),
-    dash.dependencies.State('save_data', 'value'),
     dash.dependencies.State('room_humidity', 'value'),
     dash.dependencies.State('room_temp', 'value'),
     dash.dependencies.State('room_pressure', 'value'),
 )
-def save_data(n_clicks, save_data, rh, room_temperature, pressure):
+def save_data(n_clicks, rh, room_temperature, pressure):
     global SAVING
     if SAVING:
         return True
@@ -350,7 +351,7 @@ def save_data(n_clicks, save_data, rh, room_temperature, pressure):
             print("Choosing Save Location")
             global DATA
             global SAVE_LOCATION
-            save_file_name = new_functions.new_save_data(save_data, rh, room_temperature, pressure, DATA)
+            save_file_name = new_functions.new_save_data(0, rh, room_temperature, pressure, DATA)
             SAVING = False
             SAVE_LOCATION = save_file_name
             print("Save location changed to " + save_file_name)
