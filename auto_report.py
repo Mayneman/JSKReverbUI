@@ -122,21 +122,17 @@ def get_excel(file):
     workbook.close()
     return result_list
 
+
+# Removes unnecessary fields for ease of reading.
 def reduce_excel(xlsm):
-    workbook = load_workbook(filename=xlsm, data_only=True)
-    print(workbook.get_sheet_names())
-
+    workbook = load_workbook(filename=xlsm, data_only=True, keep_vba=True)
     # REMOVE 2,4,5,6
-    ws1 = workbook.get_sheet_by_name('T2 With Sample')
-    ws2 = workbook.get_sheet_by_name('Output for Report')
-    ws3 = workbook.get_sheet_by_name('Absorption Area')
-    ws4 = workbook.get_sheet_by_name('Background calcs')
-    workbook.remove_sheet(ws1)
-    workbook.remove_sheet(ws2)
-    workbook.remove_sheet(ws3)
-    workbook.remove_sheet(ws4)
+    del workbook['T2 With Sample']
+    del workbook['Output for Report']
+    del workbook['Absorption Area']
+    del workbook['Background calcs']
 
-    ws = workbook.get_sheet_by_name('Initial Parameters')
+    ws = workbook['Initial Parameters']
     # ZERO [9 TO 12 D]
     for cell in range(9, 13):
         ws['D' + str(cell)].value = None
@@ -191,7 +187,7 @@ def full_values(csv, xlsm, sample):
     print('update_excel')
     save_excel(file, xlsm)
     print('save')
-    if sample:
+    if not sample:
         reduce_excel(xlsm)
     values = get_excel(file)
     print('values')
@@ -258,3 +254,4 @@ def changeValues(save_location, bracket_type, values):
 # values = get_excel(ROOT_DIR + "\\ReportFiles\\rt_calc.xlsm")
 # print(values)
 # save_excel_image('C:\\Users\\Lab PC\\Desktop\\lewis_test\\SAMPLE_CALCS.xlsm', ROOT_DIR + '\\ReportFiles\\chartImage.png')
+# reduce_excel('C:\\Users\\Lab PC\\Desktop\\lewis_test\\NO_SAMPLE_CALCS.xlsm')
