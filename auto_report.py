@@ -46,6 +46,8 @@ def update_excel(file):
     print('del')
     return
 
+
+# Empty Room
 def to_excel(file, data):
     workbook = load_workbook(filename=file, read_only=False, keep_vba=True)
     print('loaded Workbook')
@@ -102,6 +104,7 @@ def to_excel_sample(file, data):
     print('Close')
     return
 
+
 def save_excel(file, save):
     copyfile(file, save)
     return
@@ -118,6 +121,32 @@ def get_excel(file):
         result_list.append((ws['L' + s].value, ws['M' + s].value))
     workbook.close()
     return result_list
+
+def reduce_excel(xlsm):
+    workbook = load_workbook(filename=xlsm, data_only=True)
+    print(workbook.get_sheet_names())
+
+    # REMOVE 2,4,5,6
+    ws1 = workbook.get_sheet_by_name('T2 With Sample')
+    ws2 = workbook.get_sheet_by_name('Output for Report')
+    ws3 = workbook.get_sheet_by_name('Absorption Area')
+    ws4 = workbook.get_sheet_by_name('Background calcs')
+    workbook.remove_sheet(ws1)
+    workbook.remove_sheet(ws2)
+    workbook.remove_sheet(ws3)
+    workbook.remove_sheet(ws4)
+
+    ws = workbook.get_sheet_by_name('Initial Parameters')
+    # ZERO [9 TO 12 D]
+    for cell in range(9, 13):
+        ws['D' + str(cell)].value = None
+    # ZERO [16 TO 33 D,F,H,J]
+    cols = ['D', 'F', 'H', 'J']
+    for row in range(16, 34):
+        for col in cols:
+            ws[col + str(row)].value = None
+    workbook.save(xlsm)
+    workbook.close()
 
 
 def save_excel_image(inputExcelFilePath, outputPNGImagePath):
@@ -162,6 +191,8 @@ def full_values(csv, xlsm, sample):
     print('update_excel')
     save_excel(file, xlsm)
     print('save')
+    if sample:
+        reduce_excel(xlsm)
     values = get_excel(file)
     print('values')
     return values
